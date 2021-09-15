@@ -20,7 +20,7 @@ namespace VoxelGame.Terrain
 
 		private void Awake()
 		{
-#if DEVELOPMENT_BUILD
+#if DEVELOPMENT_BUILD || UNITY_EDITOR
 			if (Instance != null)
 			{
 				Debug.LogAssertion($"ChunkManager.Awake: Attempted to create multiple instances of type {typeof(ChunkManager)}!");

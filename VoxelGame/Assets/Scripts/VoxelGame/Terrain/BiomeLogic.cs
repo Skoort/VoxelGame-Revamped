@@ -13,10 +13,23 @@ namespace VoxelGame.Terrain
 			Random.InitState(seed);
 			_offset = Random.insideUnitSphere * 2000000;
 		}
-		
+
+		public bool HasVoxel(Vector3 voxelWorldPosition)
+		{
+			var value = GetValue(voxelWorldPosition + _offset);
+			if (value < 0.5F)
+			{
+				return false;
+			}
+			else
+			{
+				return true;
+			}
+		}
+
 		public Voxel GetVoxel(Vector3 voxelWorldPosition)
 		{
-			var value = PerlinNoise3D.Noise(voxelWorldPosition + _offset);
+			var value = GetValue(voxelWorldPosition + _offset);
 			if (value < 0.5F)
 			{
 				return null;
@@ -25,6 +38,11 @@ namespace VoxelGame.Terrain
 			{
 				return new Voxel(0, 0);
 			}
+		}
+
+		private float GetValue(Vector3 voxelWorldPosition)
+		{
+			return PerlinNoise3D.Noise(voxelWorldPosition + _offset);
 		}
 	}
 }

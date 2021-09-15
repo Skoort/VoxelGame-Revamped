@@ -15,11 +15,11 @@ C:/Users/HP/Documents/Unity Projects/VoxelGame/VoxelGame
 -logFile
 Logs/AssetImportWorker0.log
 -srvPort
-49923
+59075
 Successfully changed project path to: C:/Users/HP/Documents/Unity Projects/VoxelGame/VoxelGame
 C:/Users/HP/Documents/Unity Projects/VoxelGame/VoxelGame
 Using Asset Import Pipeline V2.
-Refreshing native plugins compatible for Editor in 80.90 ms, found 2 plugins.
+Refreshing native plugins compatible for Editor in 95.87 ms, found 2 plugins.
 Preloading 0 native plugins for Editor in 0.00 ms.
 Initialize engine version: 2020.3.12f1 (b3b2c6512326)
 [Subsystems] Discovering subsystems at path C:/Program Files/Unity/Hub/Editor/2020.3.12f1/Editor/Data/Resources/UnitySubsystems
@@ -35,42 +35,65 @@ Initialize mono
 Mono path[0] = 'C:/Program Files/Unity/Hub/Editor/2020.3.12f1/Editor/Data/Managed'
 Mono path[1] = 'C:/Program Files/Unity/Hub/Editor/2020.3.12f1/Editor/Data/MonoBleedingEdge/lib/mono/unityjit'
 Mono config path = 'C:/Program Files/Unity/Hub/Editor/2020.3.12f1/Editor/Data/MonoBleedingEdge/etc'
-Using monoOptions --debugger-agent=transport=dt_socket,embedding=1,server=y,suspend=n,address=127.0.0.1:56816
+Using monoOptions --debugger-agent=transport=dt_socket,embedding=1,server=y,suspend=n,address=127.0.0.1:56136
 Begin MonoManager ReloadAssembly
 Registering precompiled unity dll's ...
 Register platform support module: C:/Program Files/Unity/Hub/Editor/2020.3.12f1/Editor/Data/PlaybackEngines/WebGLSupport/UnityEditor.WebGL.Extensions.dll
 Register platform support module: C:/Program Files/Unity/Hub/Editor/2020.3.12f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport/UnityEditor.WindowsStandalone.Extensions.dll
-Registered in 0.007223 seconds.
+Registered in 0.024166 seconds.
 Native extension for WindowsStandalone target not found
 Native extension for WebGL target not found
-Refreshing native plugins compatible for Editor in 74.48 ms, found 2 plugins.
+Refreshing native plugins compatible for Editor in 103.81 ms, found 2 plugins.
 Preloading 0 native plugins for Editor in 0.00 ms.
 Mono: successfully reloaded assembly
-- Completed reload, in  2.073 seconds
+- Completed reload, in  3.835 seconds
 Platform modules already initialized, skipping
 Registering precompiled user dll's ...
-Registered in 0.006423 seconds.
+Registered in 0.007687 seconds.
 Begin MonoManager ReloadAssembly
 Native extension for WindowsStandalone target not found
 Native extension for WebGL target not found
-Refreshing native plugins compatible for Editor in 82.89 ms, found 2 plugins.
+Refreshing native plugins compatible for Editor in 127.50 ms, found 2 plugins.
 Preloading 0 native plugins for Editor in 0.00 ms.
 Mono: successfully reloaded assembly
-- Completed reload, in  2.216 seconds
+- Completed reload, in  4.566 seconds
 Platform modules already initialized, skipping
 ========================================================================
 Worker process is ready to serve import requests
 Shader 'Universal Render Pipeline/Particles/Lit': fallback shader 'Universal Render Pipeline/Particles/SimpleLit' not found
 Shader 'Universal Render Pipeline/Particles/Lit': fallback shader 'Universal Render Pipeline/Particles/SimpleLit' not found
-Launched and connected shader compiler UnityShaderCompiler.exe after 0.08 seconds
-Refreshing native plugins compatible for Editor in 1.09 ms, found 2 plugins.
+Launched and connected shader compiler UnityShaderCompiler.exe after 0.12 seconds
+Refreshing native plugins compatible for Editor in 1.69 ms, found 2 plugins.
 Preloading 0 native plugins for Editor in 0.00 ms.
-Unloading 2699 Unused Serialized files (Serialized files now loaded: 0)
-System memory in use before: 121.9 MB.
-System memory in use after: 119.1 MB.
+Unloading 2700 Unused Serialized files (Serialized files now loaded: 0)
+System memory in use before: 122.2 MB.
+System memory in use after: 119.4 MB.
 
-Unloading 54 unused Assets to reduce memory usage. Loaded Objects now: 3096.
-Total: 9.268100 ms (FindLiveObjects: 0.444700 ms CreateObjectMapping: 0.350200 ms MarkObjects: 6.033900 ms  DeleteObjects: 2.437000 ms)
+Unloading 54 unused Assets to reduce memory usage. Loaded Objects now: 3097.
+Total: 14.458300 ms (FindLiveObjects: 0.907300 ms CreateObjectMapping: 0.515900 ms MarkObjects: 6.166700 ms  DeleteObjects: 6.865000 ms)
+
+AssetImportParameters requested are different than current active one (requested -> active):
+  custom:framework-win-MediaFoundation: 216162199b28c13a410421893ffa2e32 -> 
+  custom:video-decoder-ogg-theora: a1e56fd34408186e4bbccfd4996cb3dc -> 
+  custom:container-muxer-webm: aa71ff27fc2769a1b78a27578f13a17b -> 
+  custom:container-demuxer-webm: 4f35f7cbe854078d1ac9338744f61a02 -> 
+  custom:container-demuxer-ogg: 62fdf1f143b41e24485cea50d1cbac27 -> 
+  custom:video-encoder-webm-vp8: eb34c28f22e8b96e1ab97ce403110664 -> 
+  custom:video-decoder-webm-vp8: 9c59270c3fd7afecdb556c50c9e8de78 -> 
+  custom:audio-decoder-ogg-vorbis: bf7c407c2cedff20999df2af8eb42d56 -> 
+  custom:audio-encoder-webm-vorbis: bf7c407c2cedff20999df2af8eb42d56 -> 
+========================================================================
+Received Prepare
+Shader 'Universal Render Pipeline/Particles/Lit': fallback shader 'Universal Render Pipeline/Particles/SimpleLit' not found
+Shader 'Universal Render Pipeline/Particles/Lit': fallback shader 'Universal Render Pipeline/Particles/SimpleLit' not found
+Refreshing native plugins compatible for Editor in 10.97 ms, found 2 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 47 Unused Serialized files (Serialized files now loaded: 0)
+System memory in use before: 67.4 MB.
+System memory in use after: 64.7 MB.
+
+Unloading 47 unused Assets to reduce memory usage. Loaded Objects now: 3097.
+Total: 31.127300 ms (FindLiveObjects: 0.677600 ms CreateObjectMapping: 0.419400 ms MarkObjects: 26.350000 ms  DeleteObjects: 3.677200 ms)
 
 AssetImportParameters requested are different than current active one (requested -> active):
   custom:framework-win-MediaFoundation: 216162199b28c13a410421893ffa2e32 -> 
@@ -86,79 +109,55 @@ AssetImportParameters requested are different than current active one (requested
 Received Import Request.
   path: Assets/Scripts/VoxelGame/Terrain/ChunkManager.cs
   artifactKey: Guid(d0c356fb447aed0459faa47db9afcdb1) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
-Start importing Assets/Scripts/VoxelGame/Terrain/ChunkManager.cs using Guid(d0c356fb447aed0459faa47db9afcdb1) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '1dd6e3505c60e5c8d50a97bf22fa08ba') in 0.061678 seconds 
-  Import took 0.069359 seconds .
+Start importing Assets/Scripts/VoxelGame/Terrain/ChunkManager.cs using Guid(d0c356fb447aed0459faa47db9afcdb1) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'ba0487f8821664485307089645dd1c41') in 0.089788 seconds 
+  Import took 0.100445 seconds .
 
 ========================================================================
 Received Import Request.
-  Time since last request: 0.000288 seconds.
-  path: Assets/Scripts/VoxelGame/Terrain/Chunk.cs
-  artifactKey: Guid(28d908bba5e2eba4589ec7411754ad9d) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
-Start importing Assets/Scripts/VoxelGame/Terrain/Chunk.cs using Guid(28d908bba5e2eba4589ec7411754ad9d) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'c7f2dd13df1a74b8017a9120d528c524') in 0.022565 seconds 
-  Import took 0.031636 seconds .
+  Time since last request: 35.558984 seconds.
+  path: Assets/Prefab
+  artifactKey: Guid(19071af7a80fd2d469671ccc17284f49) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Prefab using Guid(19071af7a80fd2d469671ccc17284f49) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '715ad589efaa63b419df670c3eae162d') in 0.034064 seconds 
+  Import took 0.043852 seconds .
 
 ========================================================================
 Received Import Request.
-  Time since last request: 0.000291 seconds.
-  path: Assets/Scripts/VoxelGame/Terrain/Voxel.cs
-  artifactKey: Guid(5e8253bb54efc844b9e8ed2a121ac258) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
-Start importing Assets/Scripts/VoxelGame/Terrain/Voxel.cs using Guid(5e8253bb54efc844b9e8ed2a121ac258) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '301944ad8648f67c155f2e8933a440e0') in 0.014373 seconds 
-  Import took 0.025374 seconds .
+  Time since last request: 4.456240 seconds.
+  path: Assets/Prefab/Chunk.prefab
+  artifactKey: Guid(5d78c3d49de314747921acdf12eb90d4) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Prefab/Chunk.prefab using Guid(5d78c3d49de314747921acdf12eb90d4) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '71c21b80ed944c5542cd92d852e1239d') in 0.097271 seconds 
+  Import took 0.106638 seconds .
 
 ========================================================================
 Received Import Request.
-  Time since last request: 0.000270 seconds.
-  path: Assets/Scripts/VoxelGame/Terrain/VoxelData.cs
-  artifactKey: Guid(3f1b6a82478cab042896efc3bd23ea31) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
-Start importing Assets/Scripts/VoxelGame/Terrain/VoxelData.cs using Guid(3f1b6a82478cab042896efc3bd23ea31) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '1fa529d4f487bd9a816e174a7f43f962') in 0.026432 seconds 
-  Import took 0.039051 seconds .
-
-========================================================================
-Received Import Request.
-  Time since last request: 17322.265890 seconds.
-  path: Assets/Scripts/VoxelGame/Terrain/Chunk.cs
-  artifactKey: Guid(28d908bba5e2eba4589ec7411754ad9d) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
-Start importing Assets/Scripts/VoxelGame/Terrain/Chunk.cs using Guid(28d908bba5e2eba4589ec7411754ad9d) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '234d614ad885adc661a90c8a5bcd49eb') in 0.029003 seconds 
-  Import took 0.277055 seconds .
-
-========================================================================
-Received Import Request.
-  Time since last request: 1628.965177 seconds.
-  path: Assets/Scripts/VoxelGame/Terrain/PerlinNoise3D.cs
-  artifactKey: Guid(c3e10a89f343d654ca7373d32a3b1333) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
-Start importing Assets/Scripts/VoxelGame/Terrain/PerlinNoise3D.cs using Guid(c3e10a89f343d654ca7373d32a3b1333) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'd4574cc0503193f234edffdc08d19aa2') in 1.512771 seconds 
-  Import took 1.600138 seconds .
-
-========================================================================
-Received Import Request.
-  Time since last request: 358.240413 seconds.
-  path: Assets/Scripts/VoxelGame/Terrain/PerlinNoise3D.cs
-  artifactKey: Guid(c3e10a89f343d654ca7373d32a3b1333) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
-Start importing Assets/Scripts/VoxelGame/Terrain/PerlinNoise3D.cs using Guid(c3e10a89f343d654ca7373d32a3b1333) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '083c9c4ae62a46a9ad24a6b8e80a6338') in 0.043585 seconds 
-  Import took 0.074597 seconds .
+  Time since last request: 0.008024 seconds.
+  path: Assets/Prefab/Chunk.prefab
+  artifactKey: Guid(5d78c3d49de314747921acdf12eb90d4) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/Prefab/Chunk.prefab using Guid(5d78c3d49de314747921acdf12eb90d4) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '71c21b80ed944c5542cd92d852e1239d') in 0.015892 seconds 
+  Import took 0.027224 seconds .
 
 ========================================================================
 Received Prepare
 Registering precompiled user dll's ...
-Registered in 0.348404 seconds.
+Registered in 0.007241 seconds.
 Begin MonoManager ReloadAssembly
 Native extension for WindowsStandalone target not found
 Native extension for WebGL target not found
-Refreshing native plugins compatible for Editor in 0.68 ms, found 2 plugins.
+Refreshing native plugins compatible for Editor in 0.78 ms, found 2 plugins.
 Preloading 0 native plugins for Editor in 0.00 ms.
 Mono: successfully reloaded assembly
-- Completed reload, in  2.037 seconds
+- Completed reload, in  1.778 seconds
 Platform modules already initialized, skipping
 Shader 'Universal Render Pipeline/Particles/Lit': fallback shader 'Universal Render Pipeline/Particles/SimpleLit' not found
 Shader 'Universal Render Pipeline/Particles/Lit': fallback shader 'Universal Render Pipeline/Particles/SimpleLit' not found
 Refreshing native plugins compatible for Editor in 1.14 ms, found 2 plugins.
 Preloading 0 native plugins for Editor in 0.00 ms.
 Unloading 2625 Unused Serialized files (Serialized files now loaded: 0)
-System memory in use before: 118.3 MB.
-System memory in use after: 115.5 MB.
+System memory in use before: 118.6 MB.
+System memory in use after: 115.8 MB.
 
 Unloading 49 unused Assets to reduce memory usage. Loaded Objects now: 3100.
-Total: 10.409500 ms (FindLiveObjects: 0.653700 ms CreateObjectMapping: 0.425200 ms MarkObjects: 6.068500 ms  DeleteObjects: 3.258100 ms)
+Total: 13.107600 ms (FindLiveObjects: 4.928600 ms CreateObjectMapping: 0.685800 ms MarkObjects: 4.629800 ms  DeleteObjects: 2.860000 ms)
 
 AssetImportParameters requested are different than current active one (requested -> active):
   custom:framework-win-MediaFoundation: 216162199b28c13a410421893ffa2e32 -> 
@@ -171,35 +170,60 @@ AssetImportParameters requested are different than current active one (requested
   custom:audio-decoder-ogg-vorbis: bf7c407c2cedff20999df2af8eb42d56 -> 
   custom:audio-encoder-webm-vorbis: bf7c407c2cedff20999df2af8eb42d56 -> 
 ========================================================================
-Received Import Request.
-  Time since last request: 4749.341701 seconds.
-  path: Assets/Scripts/VoxelGame/Terrain/PerlinNoise3D.cs
-  artifactKey: Guid(c3e10a89f343d654ca7373d32a3b1333) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
-Start importing Assets/Scripts/VoxelGame/Terrain/PerlinNoise3D.cs using Guid(c3e10a89f343d654ca7373d32a3b1333) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'e88bbbf0a63ad0fa20d250793e8f02a8') in 0.029835 seconds 
-  Import took 0.040432 seconds .
-
-========================================================================
 Received Prepare
 Registering precompiled user dll's ...
-Registered in 0.019043 seconds.
+Registered in 0.005926 seconds.
 Begin MonoManager ReloadAssembly
 Native extension for WindowsStandalone target not found
 Native extension for WebGL target not found
-Refreshing native plugins compatible for Editor in 0.62 ms, found 2 plugins.
+Refreshing native plugins compatible for Editor in 0.69 ms, found 2 plugins.
 Preloading 0 native plugins for Editor in 0.00 ms.
 Mono: successfully reloaded assembly
-- Completed reload, in  1.820 seconds
+- Completed reload, in  1.581 seconds
 Platform modules already initialized, skipping
 Shader 'Universal Render Pipeline/Particles/Lit': fallback shader 'Universal Render Pipeline/Particles/SimpleLit' not found
 Shader 'Universal Render Pipeline/Particles/Lit': fallback shader 'Universal Render Pipeline/Particles/SimpleLit' not found
-Refreshing native plugins compatible for Editor in 6.41 ms, found 2 plugins.
+Refreshing native plugins compatible for Editor in 1.15 ms, found 2 plugins.
 Preloading 0 native plugins for Editor in 0.00 ms.
 Unloading 2625 Unused Serialized files (Serialized files now loaded: 0)
-System memory in use before: 118.3 MB.
-System memory in use after: 115.6 MB.
+System memory in use before: 118.6 MB.
+System memory in use after: 115.9 MB.
 
 Unloading 49 unused Assets to reduce memory usage. Loaded Objects now: 3103.
-Total: 9.399700 ms (FindLiveObjects: 0.660700 ms CreateObjectMapping: 0.432200 ms MarkObjects: 4.930300 ms  DeleteObjects: 3.373400 ms)
+Total: 8.829900 ms (FindLiveObjects: 0.694100 ms CreateObjectMapping: 0.383600 ms MarkObjects: 4.381900 ms  DeleteObjects: 3.367700 ms)
+
+AssetImportParameters requested are different than current active one (requested -> active):
+  custom:framework-win-MediaFoundation: 216162199b28c13a410421893ffa2e32 -> 
+  custom:video-decoder-ogg-theora: a1e56fd34408186e4bbccfd4996cb3dc -> 
+  custom:container-muxer-webm: aa71ff27fc2769a1b78a27578f13a17b -> 
+  custom:container-demuxer-webm: 4f35f7cbe854078d1ac9338744f61a02 -> 
+  custom:container-demuxer-ogg: 62fdf1f143b41e24485cea50d1cbac27 -> 
+  custom:video-encoder-webm-vp8: eb34c28f22e8b96e1ab97ce403110664 -> 
+  custom:video-decoder-webm-vp8: 9c59270c3fd7afecdb556c50c9e8de78 -> 
+  custom:audio-decoder-ogg-vorbis: bf7c407c2cedff20999df2af8eb42d56 -> 
+  custom:audio-encoder-webm-vorbis: bf7c407c2cedff20999df2af8eb42d56 -> 
+========================================================================
+Received Prepare
+Registering precompiled user dll's ...
+Registered in 0.011574 seconds.
+Begin MonoManager ReloadAssembly
+Native extension for WindowsStandalone target not found
+Native extension for WebGL target not found
+Refreshing native plugins compatible for Editor in 1.22 ms, found 2 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Mono: successfully reloaded assembly
+- Completed reload, in  2.363 seconds
+Platform modules already initialized, skipping
+Shader 'Universal Render Pipeline/Particles/Lit': fallback shader 'Universal Render Pipeline/Particles/SimpleLit' not found
+Shader 'Universal Render Pipeline/Particles/Lit': fallback shader 'Universal Render Pipeline/Particles/SimpleLit' not found
+Refreshing native plugins compatible for Editor in 1.38 ms, found 2 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 2625 Unused Serialized files (Serialized files now loaded: 0)
+System memory in use before: 118.7 MB.
+System memory in use after: 115.9 MB.
+
+Unloading 49 unused Assets to reduce memory usage. Loaded Objects now: 3106.
+Total: 9.429200 ms (FindLiveObjects: 0.708900 ms CreateObjectMapping: 0.418500 ms MarkObjects: 4.542200 ms  DeleteObjects: 3.756200 ms)
 
 AssetImportParameters requested are different than current active one (requested -> active):
   custom:framework-win-MediaFoundation: 216162199b28c13a410421893ffa2e32 -> 
