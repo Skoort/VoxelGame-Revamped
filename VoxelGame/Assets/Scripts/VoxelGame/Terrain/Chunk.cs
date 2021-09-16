@@ -58,10 +58,10 @@ namespace VoxelGame.Terrain
 			for (int x = 0; x < _voxels.GetLength(0); ++x)
 			{
 				_voxels[x, y, z] = ChunkManager.Instance.BiomeLogic.GetVoxel(new Vector3(x, y, z) + transform.position);
-				if (_voxels[x, y, z] != null)
-				{
-					Debug.Log($"Created Voxel ({x},{y},{z})!");
-				}
+				//if (_voxels[x, y, z] != null)
+				//{
+				//	Debug.Log($"Created Voxel ({x},{y},{z})!");
+				//}
 			}
 		}
 
@@ -144,9 +144,9 @@ namespace VoxelGame.Terrain
 
 		private void CreateMeshSlice(int axis, int offset, int dir)
 		{
-			Debug.Log($"AXIS: {axis} OFFSET: {offset} DIR: {dir}");
+			//Debug.Log($"AXIS: {axis} OFFSET: {offset} DIR: {dir}");
 			Rel2AbsIndex(axis, 0, 1, 2, out int relAxisX, out int relAxisY, out _);
-			Debug.Log($"LOCAL AXIS X: {relAxisX} LOCAL AXIS Y: {relAxisY}");
+			//Debug.Log($"LOCAL AXIS X: {relAxisX} LOCAL AXIS Y: {relAxisY}");
 
 			var faceIndex = axis + dir * 3;
 
@@ -156,14 +156,14 @@ namespace VoxelGame.Terrain
 				if (GetVoxelByRelativeIndex(axis, x, y, offset, out var voxel))
 				{
 					var debugPos = Rel2AbsVector(axis, new Vector3Int(x, y, offset));
-					Debug.Log($"Checking voxel L({x},{y},{offset})-G({debugPos.x},{debugPos.y},{debugPos.z}).");
+					//Debug.Log($"Checking voxel L({x},{y},{offset})-G({debugPos.x},{debugPos.y},{debugPos.z}).");
 
 					Rel2AbsIndex(axis, x, y, offset + (dir == 0 ? +1 : -1), out int outAbsX, out int outAbsY, out int outAbsZ);
 
 					// A face should only be drawn if the voxel in front/behind (relative) this one doesn't exist.
 					if (!HasVoxel(outAbsX, outAbsY, outAbsZ))
 					{
-						Debug.Log("Voxel is visible!");
+						//Debug.Log("Voxel is visible!");
 
 						GetVoxelByRelativeIndex(axis, x, y - 1, offset, out var topNeighbor);
 						GetVoxelByRelativeIndex(axis, x - 1, y, offset, out var lftNeighbor);
@@ -179,7 +179,7 @@ namespace VoxelGame.Terrain
 						if (topMesh != null && topMesh.Scale.x == 1)
 						{
 							// Growing a rect wider than 1 unit is handled by creating another rect and merging the two.
-							Debug.Log("The top (relative) voxel's rect is only 1 unit wide. Extending it downwards by 1!");
+							//Debug.Log("The top (relative) voxel's rect is only 1 unit wide. Extending it downwards by 1!");
 									
 							++topMesh.Scale.y;
 							usedMesh = topMesh;
@@ -190,8 +190,8 @@ namespace VoxelGame.Terrain
 							// Because of the way we iterate, the rect grows to the right as much as possible
 							// before exploring a way to grow downwards. Therefore, a rect that has grown
 							// downwards cannot be grown to the right anymore.
-							Debug.Log("Left (relative) voxel has a rect we can use!");
-							Debug.Log("Extending the left (relative) voxel's rect to the right by 1!");
+							//Debug.Log("Left (relative) voxel has a rect we can use!");
+							//Debug.Log("Extending the left (relative) voxel's rect to the right by 1!");
 
 							++lftMesh.Scale.x;
 
@@ -199,10 +199,10 @@ namespace VoxelGame.Terrain
 								&& lftMesh.SliceSpacePosition.x == topMesh.SliceSpacePosition.x
 								&& lftMesh.Scale.x == topMesh.Scale.x)
 							{
-								Debug.Log("Extending the left voxel's rect caused it to be merged with the top voxel's rect!");
+								//Debug.Log("Extending the left voxel's rect caused it to be merged with the top voxel's rect!");
 								++topMesh.Scale.y;
 									
-								Debug.Log("Recycling the left voxel's rect!");
+								//Debug.Log("Recycling the left voxel's rect!");
 								RecycleMeshFace(lftMesh);
 								for (int i = 1; i < lftMesh.Scale.x; ++i)
 								{
@@ -220,7 +220,7 @@ namespace VoxelGame.Terrain
 
 						if (usedMesh == null)
 						{
-							Debug.Log("Created a rect for this voxel!");
+							//Debug.Log("Created a rect for this voxel!");
 
 							usedMesh = CreateMeshFace(axis, offset, dir, x, y);
 						}
@@ -293,7 +293,7 @@ namespace VoxelGame.Terrain
 
 		private void ShowMesh()
 		{
-			Debug.Log("Showing mesh!");
+			//Debug.Log("Showing mesh!");
 			_mesh = new Mesh();
 			_mesh.SetVertices(_vertices);
 			_mesh.SetNormals(_normals);
@@ -340,7 +340,7 @@ namespace VoxelGame.Terrain
 		private void OnDrawGizmosSelected()
 		{
 			Gizmos.color = Color.red;
-			Gizmos.DrawWireMesh(_mesh, 0);
+			Gizmos.DrawWireMesh(_mesh, 0, transform.position);
 		}
 	}
 }
