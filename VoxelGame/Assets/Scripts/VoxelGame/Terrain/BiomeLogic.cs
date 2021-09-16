@@ -16,7 +16,7 @@ namespace VoxelGame.Terrain
 
 		public bool HasVoxel(Vector3 voxelWorldPosition)
 		{
-			var value = GetValue(voxelWorldPosition + _offset);
+			var value = GetValue(voxelWorldPosition);
 			if (value < 0.5F)
 			{
 				return false;
@@ -29,7 +29,7 @@ namespace VoxelGame.Terrain
 
 		public Voxel GetVoxel(Vector3 voxelWorldPosition)
 		{
-			var value = GetValue(voxelWorldPosition + _offset);
+			var value = GetValue(voxelWorldPosition);
 			if (value < 0.5F)
 			{
 				return null;
@@ -42,7 +42,7 @@ namespace VoxelGame.Terrain
 
 		private float GetValue(Vector3 voxelWorldPosition)
 		{
-			return PerlinNoise3D.Noise(voxelWorldPosition + _offset);
+			return PerlinNoise3D.Noise(voxelWorldPosition * 0.1F + _offset);
 		}
 	}
 }

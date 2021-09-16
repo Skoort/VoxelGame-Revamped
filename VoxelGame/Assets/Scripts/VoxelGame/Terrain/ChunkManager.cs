@@ -39,14 +39,16 @@ namespace VoxelGame.Terrain
 			BiomeLogic = new BiomeLogic(_worldSeed);
 
 			_chunks = new Dictionary<Vector3Int, Chunk>();
-			for (int z = 0; z < _chunkSize.z; ++z)
-			for (int y = 0; y < _chunkSize.y; ++y)
-			for (int x = 0; x < _chunkSize.x; ++x)  // TODO: Implement way to control the number of chunks.
+			for (int z = 0; z < 3; ++z)
+			for (int y = 0; y < 3; ++y)
+			for (int x = 0; x < 3; ++x)  // TODO: Implement way to control the number of chunks.
 			{
 				var _relativePos = new Vector3Int(x, y, z);
 				var _absolutePos = _relativePos * _chunkSize;
 				var chunk = Instantiate<Chunk>(_chunkPrefab, _absolutePos, Quaternion.identity, this.transform);
-				
+					
+				chunk.Init(_chunkSize);
+
 				_chunks.Add(_relativePos, chunk);
 			}
 		}

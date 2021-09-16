@@ -46,6 +46,8 @@ namespace VoxelGame.Terrain
 			_voxels = new Voxel[chunkSize.x, chunkSize.y, chunkSize.z];
 			ClearMesh();
 			InitVoxels();
+			CreateMesh();
+			ShowMesh();
 		}
 
 		private void InitVoxels()
@@ -213,17 +215,17 @@ namespace VoxelGame.Terrain
 								else
 								{
 									// This is the first rect in its immediate vicinity.
-									CreateMeshFace(axis, offset, dir, x, y);
+									mesh = CreateMeshFace(axis, offset, dir, x, y);
 								}
 							}
 
 							voxel.AddFace(faceIndex, mesh.MeshIndex);
 						} else
 						if (inheritedMesh != null)
-					{
-						// The inherited mesh did not reach the width of the top rect. Mark the mesh as completed.
-						inheritedMesh = null;
-					}
+						{
+							// The inherited mesh did not reach the width of the top rect. Mark the mesh as completed.
+							inheritedMesh = null;
+						}
 					}
 				}
 			}
@@ -295,6 +297,8 @@ namespace VoxelGame.Terrain
 
 		private void ShowMesh()
 		{
+			Debug.Log("Showing mesh!");
+			_mesh = new Mesh();
 			_mesh.SetIndices(_faces.ToArray(), MeshTopology.Quads, 0);
 			_mesh.SetVertices(_vertices);
 			_mesh.SetNormals(_normals);
