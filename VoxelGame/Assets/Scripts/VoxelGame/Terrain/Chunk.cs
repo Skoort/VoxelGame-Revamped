@@ -22,9 +22,8 @@ namespace VoxelGame.Terrain
 			public int MeshIndex { get; set; }  // Points to the actual 3D data.
 			
 			public int SliceDimension { get; set; }  // 0, 1, or 2 (used when you have to cut the rectangle up.
-			public int SliceOffset { get; set; }
-			public Vector2Int SlicePosition;
-			public Vector2Int RectScale;
+			public Vector3Int SliceSpacePosition;
+			public Vector2Int Scale;
 		}
 		#endregion
 
@@ -84,57 +83,71 @@ namespace VoxelGame.Terrain
 					}
 				}
 			}
-			// TODO: Correctly position the created meshes in 3D space in the local coordinate system.
+
+			PositionMeshSlices();
 		}
 		
+		#region --- Local functions ---
+
+		//  axis | relAxisX | relAxisY
+		// ------+----------+----------
+		//    Z  |    X     |    Y   
+		//    Y  |    X     |    Z   
+		//    X  |    Z     |    Y   
+		void Rel2AbsIndex(int axis, int xRel, int yRel, int zRel, out int x, out int y, out int z)
+		{
+			x = axis != 0 ? xRel : zRel;
+			y = axis != 1 ? yRel : zRel;
+			z = axis == 0
+				? xRel
+				: axis == 1
+					? yRel
+					: zRel;
+		}
+
+		Vector3Int Rel2AbsPosition(int axis, Vector3Int rel)
+		{
+			int absX = axis != 0 ? rel.x : rel.z;
+			int absY = axis != 1 ? rel.y : rel.z;
+			int absZ = axis == 0
+				? rel.x
+				: axis == 1
+					? rel.y
+					: rel.z;
+			return new Vector3Int(absX, absY, absZ);
+		}
+
+		bool GetVoxelByRelativeIndex(int axis, int xRel, int yRel, int zRel, out Voxel voxel)
+		{
+			Rel2AbsIndex(axis, xRel, yRel, zRel, out int xAbs, out int yAbs, out int zAbs);
+
+			if (IsWithinBounds(xAbs, yAbs, zAbs))
+			{
+				voxel = _voxels[xAbs, yAbs, zAbs];
+				return true;
+			}
+			else
+			{
+				voxel = null;
+				return false;
+			}
+		}
+
+		#endregion
+
 		private void CreateMeshSlice(int axis, int offset, int dir)
 		{
-			#region --- Local functions ---
-
-			//  axis | relAxisX | relAxisY
-			// ------+----------+----------
-			//    Z  |    X     |    Y   
-			//    Y  |    X     |    Z   
-			//    X  |    Z     |    Y   
-			void Rel2AbsIndex(int xRel, int yRel, int zRel, out int x, out int y, out int z)
-			{
-				x = axis != 0 ? xRel : zRel;
-				y = axis != 1 ? yRel : zRel;
-				z = axis == 0
-					? xRel
-					: axis == 1
-						? yRel
-						: zRel;
-			}
-
-			bool GetVoxelByRelativeIndex(int xRel, int yRel, int zRel, out Voxel voxel)
-			{
-				Rel2AbsIndex(xRel, yRel, zRel, out int xAbs, out int yAbs, out int zAbs);
-
-				if (IsWithinBounds(xAbs, yAbs, zAbs))
-				{
-					voxel = _voxels[xAbs, yAbs, zAbs];
-					return true;
-				}
-				else
-				{
-					voxel = null;
-					return false;
-				}
-			}
-
-			#endregion
 			
-			Rel2AbsIndex(0, 1, 2, out int relAxisX, out int relAxisY, out _);
+			Rel2AbsIndex(axis, 0, 1, 2, out int relAxisX, out int relAxisY, out _);
 			
 			for (int y = 0; y < _voxels.GetLength(relAxisY); ++y)
 			{
 				MeshFace inheritedMesh = null;
 				for (int x = 0; x < _voxels.GetLength(relAxisX); ++x)
 				{
-					if (GetVoxelByRelativeIndex(x, y, offset, out var voxel))
+					if (GetVoxelByRelativeIndex(axis, x, y, offset, out var voxel))
 					{ 
-						Rel2AbsIndex(x, y, offset + (dir == 0 ? +1 : -1), out int outAbsX, out int outAbsY, out int outAbsZ);
+						Rel2AbsIndex(axis, x, y, offset + (dir == 0 ? +1 : -1), out int outAbsX, out int outAbsY, out int outAbsZ);
 
 						// A face should only be drawn if the voxel in front/behind (relative) this one doesn't exist.
 						if (!HasVoxel(outAbsX, outAbsY, outAbsZ))
@@ -142,14 +155,14 @@ namespace VoxelGame.Terrain
 							var faceIndex = axis * dir;
 
 							MeshFace mesh = null;
-							if (GetVoxelByRelativeIndex(x, y - 1, offset, out var neighbor) && neighbor.FaceIndices[faceIndex] != -1)
+							if (GetVoxelByRelativeIndex(axis, x, y - 1, offset, out var neighbor) && neighbor.FaceIndices[faceIndex] != -1)
 							{
 								mesh = _greedyMeshData[neighbor.FaceIndices[faceIndex]];
 
-								if (mesh.RectScale.x == 1)
+								if (mesh.Scale.x == 1)
 								{
 									// If the top rect is 1 unit wide, then we safely extend downwards.
-									++mesh.RectScale.y;
+									++mesh.Scale.y;
 								} else
 								if (inheritedMesh == null)
 								{
@@ -160,10 +173,10 @@ namespace VoxelGame.Terrain
 								}
 								else
 								{
-									if (inheritedMesh.RectScale.x != mesh.RectScale.x)
+									if (inheritedMesh.Scale.x != mesh.Scale.x)
 									{
 										// The bottom rect is not yet equal to the top one, so we can safely grow it.
-										++inheritedMesh.RectScale.x;
+										++inheritedMesh.Scale.x;
 									}
 									else
 									{ 
@@ -171,12 +184,12 @@ namespace VoxelGame.Terrain
 										// and recycle the bottom one. We have to remember to reassign the bottom voxels' rect.
 										RecycleMeshFace(inheritedMesh);
 										inheritedMesh = null;
-										++mesh.RectScale.y;
+										++mesh.Scale.y;
 
 										// Reassign the face indices of the bottom rect's voxels (except for voxel, which is done below).
-										for (int i = 1; i < mesh.RectScale.x; ++i)
+										for (int i = 1; i < mesh.Scale.x; ++i)
 										{
-											GetVoxelByRelativeIndex(x - i, y, offset, out var voxelToFix);
+											GetVoxelByRelativeIndex(axis, x - i, y, offset, out var voxelToFix);
 											voxelToFix.FaceIndices[faceIndex] = mesh.MeshIndex;  // voxelToFix can't be null.
 										}
 									}
@@ -190,12 +203,12 @@ namespace VoxelGame.Terrain
 									inheritedMesh = null;
 								} 
 							
-								if (GetVoxelByRelativeIndex(x - 1, y, offset, out neighbor) && neighbor.FaceIndices[faceIndex] != -1)
+								if (GetVoxelByRelativeIndex(axis, x - 1, y, offset, out neighbor) && neighbor.FaceIndices[faceIndex] != -1)
 								{
 									// Because we have gotten here, we can safely say that the left rect is only one unit wide, so we
 									// can safely extend it to the right.
 									mesh = _greedyMeshData[neighbor.FaceIndices[faceIndex]];
-									++mesh.RectScale.x;
+									++mesh.Scale.x;
 								}
 								else
 								{
@@ -226,7 +239,7 @@ namespace VoxelGame.Terrain
 				meshData = _unusedMeshData.Dequeue();
 
 				// Unused MeshData might have a different scale from (1,1,1) and its vertices might have been flattened to make it invisible.
-				meshData.RectScale = Vector2Int.one;
+				meshData.Scale = Vector2Int.one;
 				for (int i = 0; i < 4; ++i)
 				{
 					_vertices[i + meshData.MeshIndex * 4] = VoxelData.Vertices[voxelFaceIndex][i];
@@ -239,9 +252,8 @@ namespace VoxelGame.Terrain
 					MeshIndex = _greedyMeshData.Count,
 					
 					SliceDimension = sliceDimension,
-					SliceOffset = sliceOffset,
-					SlicePosition = new Vector2Int(x, y),
-					RectScale = Vector2Int.one
+					SliceSpacePosition = new Vector3Int(x, y, sliceOffset),
+					Scale = Vector2Int.one
 				};
 
 				var faces = new int[] { 0, 1, 2, 3 };
@@ -264,6 +276,21 @@ namespace VoxelGame.Terrain
 			}
 
 			_unusedMeshData.Enqueue(face);
+		}
+
+		private void PositionMeshSlices()
+		{
+			foreach (var rect in _greedyMeshData)
+			{
+				for (int i = 0; i < 4; ++i)
+				{
+					var vertexIndex = rect.MeshIndex * 4 + i;
+
+					var absDimensions = Rel2AbsPosition(rect.SliceDimension, (Vector3Int) rect.Scale);
+					var absPosition = Rel2AbsPosition(rect.SliceDimension, rect.SliceSpacePosition);
+					_vertices[vertexIndex] = Vector3Int.FloorToInt(_vertices[vertexIndex]) * absDimensions + absPosition;
+				}
+			}
 		}
 
 		private void ShowMesh()
