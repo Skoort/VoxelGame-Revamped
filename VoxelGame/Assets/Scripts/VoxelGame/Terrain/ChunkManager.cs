@@ -18,6 +18,9 @@ namespace VoxelGame.Terrain
 
 		public BiomeLogic BiomeLogic { get; private set; }
 
+		[SerializeField] private Transform _playerTransform = null;
+		[SerializeField] private float _playerViewDistance = 50;
+
 		private void Awake()
 		{
 #if DEVELOPMENT_BUILD || UNITY_EDITOR
@@ -39,17 +42,55 @@ namespace VoxelGame.Terrain
 			BiomeLogic = new BiomeLogic(_worldSeed);
 
 			_chunks = new Dictionary<Vector3Int, Chunk>();
-			for (int z = 0; z < 26; ++z)
-			for (int y = 0; y < 26; ++y)
-			for (int x = 0; x < 26; ++x)  // TODO: Implement way to control the number of chunks.
-			{
-				var _relativePos = new Vector3Int(x, y, z);
-				var _absolutePos = _relativePos * _chunkSize;
-				var chunk = Instantiate<Chunk>(_chunkPrefab, _absolutePos, Quaternion.identity, this.transform);
-					
-				chunk.Init(_chunkSize);
+		}
 
-				_chunks.Add(_relativePos, chunk);
+		private float _loadCooldown = 1;
+		private void Update()
+		{
+			_loadCooldown -= Time.deltaTime;
+			if (_loadCooldown <= 0)
+			{
+				//Debug.Log("Loading chunks!");
+				ShowChunksWithinView();
+				_loadCooldown = 1;
+			}
+		}
+
+		private Vector3Int GetChunkID(Vector3 pos)
+		{
+			return Vector3Int.FloorToInt(pos / _chunkSize.x);
+		}
+
+		private void ShowChunksWithinView()
+		{
+			int ratio = Mathf.CeilToInt(_playerViewDistance / _chunkSize.x);
+
+			//Debug.Log(ratio);
+
+			// Get the Chunks enveloping the player.
+			for (int i = -ratio; i < +ratio; ++i)
+			for (int j = -ratio; j < +ratio; ++j)
+			for (int k = -1; k < 2; ++k)
+			{
+				var chunkId = GetChunkID(new Vector3(i, j, k) * _chunkSize.x + _playerTransform.position);
+				var chunkPos = chunkId * _chunkSize.x;
+
+				if (_chunks.TryGetValue(chunkId, out var chunk))
+				{
+					//Debug.Log("Reactivating chunk!");
+					if (chunk.gameObject.activeInHierarchy)
+					{
+						chunk.gameObject.SetActive(true);
+					}	
+				}
+				else
+				{  // We have to create this Chunk.
+					//Debug.Log("Spawning Chunk " + chunkId);
+					chunk = Instantiate(_chunkPrefab, chunkPos, Quaternion.identity, this.transform);
+					chunk.Init(_chunkSize);
+
+					_chunks.Add(chunkId, chunk);
+				}
 			}
 		}
 	}
