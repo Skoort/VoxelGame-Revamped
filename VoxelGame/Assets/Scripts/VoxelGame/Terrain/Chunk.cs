@@ -30,9 +30,10 @@ namespace VoxelGame.Terrain
 		}
 		#endregion
 
-		public Vector3Int Position { get; }
+		public Vector3Int Position { get; private set; }
 
 		private Voxel[,,] _voxels;
+		private bool[,,] _isSolid;
 
 		private void Awake()
 		{
@@ -44,46 +45,59 @@ namespace VoxelGame.Terrain
 
 		}
 
-		public async Task Init(Vector3Int chunkSize)
+		public async Task Init()
 		{
+			var chunkSize = ChunkManager.Instance.ChunkSize;
+			Position = Vector3Int.FloorToInt(transform.position);
 			_voxels = new Voxel[chunkSize.x, chunkSize.y, chunkSize.z];
+			_isSolid = new bool[chunkSize.x + 2, chunkSize.y + 2, chunkSize.z + 2];
 			ClearMesh();
 
-			var stopwatch = new System.Diagnostics.Stopwatch();
-			stopwatch.Start();
+			//var stopwatch = new System.Diagnostics.Stopwatch();
+			//stopwatch.Start();
 
 			await Task.Run(() =>
 			{
-			//	try
-			//	{
-			//		Debug.Log("Stuff");
-					InitVoxels();
-					//Debug.Log("Created voxels!");
-					CreateMesh();
-			//	}
-			//	catch (Exception e)
-			//	{
-			//		Debug.Log($"Exception: {e.Message} Inner exception: {e.InnerException.Message}");
-			//	}
+				//	try
+				//	{
+				//		Debug.Log("Stuff");
+				InitVoxels();
+				//Debug.Log("Created voxels!");
+				CreateMesh();
+				//	}
+				//	catch (Exception e)
+				//	{
+				//		Debug.Log($"Exception: {e.Message} Inner exception: {e.InnerException.Message}");
+				//	}
 			});
 
-			stopwatch.Stop();
-			Debug.Log($"Chunk took {stopwatch.ElapsedMilliseconds} milliseconds to create!");
+			//stopwatch.Stop();
+			//Debug.Log($"Chunk took {stopwatch.ElapsedMilliseconds} milliseconds to create!");
 
 			ShowMesh();
 		}
-
+		
 		private void InitVoxels()
 		{
 			//Debug.Log(_voxels.GetLength(0));
 			//Debug.Log(_voxels.GetLength(1));
 			//Debug.Log(_voxels.GetLength(2));
-			for (int z = 0; z < _voxels.GetLength(2); ++z)
-			for (int y = 0; y < _voxels.GetLength(1); ++y)
-			for (int x = 0; x < _voxels.GetLength(0); ++x)
+
+			for (int z = 0; z < _voxels.GetLength(2) + 2; ++z)
+			for (int y = 0; y < _voxels.GetLength(1) + 2; ++y)
+			for (int x = 0; x < _voxels.GetLength(0) + 2; ++x)
 			{
-				//Debug.Log("In loop!");
-				_voxels[x, y, z] = ChunkManager.Instance.BiomeLogic.GetVoxel(new Vector3(x, y, z) + transform.position);
+				if (x == 0 || y == 0 || z == 0 || x > _voxels.GetLength(0) || y > _voxels.GetLength(1) || z > _voxels.GetLength(2))
+				{
+					_isSolid[x, y, z] = ChunkManager.Instance.BiomeLogic.HasVoxel(new Vector3(x - 1, y - 1, z - 1) + Position);
+				}
+				else
+				{ 
+						
+					//Debug.Log("In loop!");
+					_voxels[x - 1, y - 1, z - 1] = ChunkManager.Instance.BiomeLogic.GetVoxel(new Vector3(x - 1, y - 1, z - 1) + Position);
+					_isSolid[x, y, z] = _voxels[x - 1, y - 1, z - 1] != null;
+				}
 						//Debug.Log("Created voxel!");
 				//if (_voxels[x, y, z] != null)
 				//{
@@ -100,9 +114,9 @@ namespace VoxelGame.Terrain
 			_unusedMeshData = new Queue<MeshFace>();
 			_greedyMeshData = new List<MeshFace>();
 			_faces = new List<int>();
-			_vertices = new List<Vector3>();
-			_normals = new List<Vector3>();
-			_uvs = new List<Vector2>();
+			_vertices = new List<Vector3>(1000);
+			_normals = new List<Vector3>(1000);
+			_uvs = new List<Vector2>(1000);
 		}
 		
 		private void CreateMesh()
@@ -191,7 +205,8 @@ namespace VoxelGame.Terrain
 					Rel2AbsIndex(axis, x, y, offset + (dir == 0 ? +1 : -1), out int outAbsX, out int outAbsY, out int outAbsZ);
 
 					// A face should only be drawn if the voxel in front/behind (relative) this one doesn't exist.
-					if (!HasVoxel(outAbsX, outAbsY, outAbsZ))
+					//if (!HasVoxel(outAbsX, outAbsY, outAbsZ))
+					if (!_isSolid[outAbsX+1, outAbsY+1, outAbsZ+1])
 					{
 						//Debug.Log("Voxel is visible!");
 
@@ -340,7 +355,7 @@ namespace VoxelGame.Terrain
 					IsWithinBounds(x, y, z)
 				 && _voxels[x, y, z] != null
 				)
-			 || ChunkManager.Instance.BiomeLogic.HasVoxel(new Vector3(x, y, z) + transform.position);
+			 || ChunkManager.Instance.BiomeLogic.HasVoxel(new Vector3(x, y, z) + Position);
 		}
 
 		private bool IsWithinBounds(int x, int y, int z)
@@ -363,14 +378,14 @@ namespace VoxelGame.Terrain
 			}
 			else
 			{
-				return ChunkManager.Instance.BiomeLogic.GetVoxel(new Vector3(x, y, z) + transform.position);
+				return ChunkManager.Instance.BiomeLogic.GetVoxel(new Vector3(x, y, z) + Position);
 			}
 		}
 
 		private void OnDrawGizmosSelected()
 		{
 			Gizmos.color = Color.red;
-			Gizmos.DrawWireMesh(_mesh, 0, transform.position);
+			Gizmos.DrawWireMesh(_mesh, 0, Position);
 		}
 	}
 }

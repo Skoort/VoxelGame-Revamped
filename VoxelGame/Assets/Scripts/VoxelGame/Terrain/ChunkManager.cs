@@ -12,6 +12,8 @@ namespace VoxelGame.Terrain
 		[SerializeField] private Chunk _chunkPrefab = null;
 
 		[SerializeField] private Vector3Int _chunkSize = new Vector3Int(16, 16, 16);
+		public Vector3Int ChunkSize => _chunkSize;
+
 		private Dictionary<Vector3Int, Chunk> _chunks;
 
 		[SerializeField] private VoxelData[] _voxelDatas = null;
@@ -72,7 +74,8 @@ namespace VoxelGame.Terrain
 			// Get the Chunks enveloping the player.
 			for (int i = -ratio; i < +ratio; ++i)
 			for (int j = -ratio; j < +ratio; ++j)
-			for (int k = -ratio; k < +ratio; ++k)
+			//for (int k = -ratio; k < +ratio; ++k)
+			for (int k = -1; k < 1; ++k)
 			{
 				var chunkId = GetChunkID(new Vector3(i, j, k) * _chunkSize.x + _playerTransform.position);
 				var chunkPos = chunkId * _chunkSize.x;
@@ -89,7 +92,7 @@ namespace VoxelGame.Terrain
 				{  // We have to create this Chunk.
 					//Debug.Log("Spawning Chunk " + chunkId);
 					chunk = Instantiate(_chunkPrefab, chunkPos, Quaternion.identity, this.transform);
-					chunk.Init(_chunkSize);
+					chunk.Init();
 
 					_chunks.Add(chunkId, chunk);
 				}
