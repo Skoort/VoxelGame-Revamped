@@ -42,17 +42,19 @@ namespace VoxelGame.Terrain
 			BiomeLogic = new BiomeLogic(_worldSeed);
 
 			_chunks = new Dictionary<Vector3Int, Chunk>();
+			_loadTimer = _loadCooldown;
 		}
 
-		private float _loadCooldown = 1;
+		private float _loadCooldown = 0.1F;
+		private float _loadTimer;
 		private void Update()
 		{
-			_loadCooldown -= Time.deltaTime;
-			if (_loadCooldown <= 0)
+			_loadTimer -= Time.deltaTime;
+			if (_loadTimer <= 0)
 			{
 				//Debug.Log("Loading chunks!");
 				ShowChunksWithinView();
-				_loadCooldown = 1;
+				_loadTimer = _loadCooldown;
 			}
 		}
 
@@ -70,7 +72,7 @@ namespace VoxelGame.Terrain
 			// Get the Chunks enveloping the player.
 			for (int i = -ratio; i < +ratio; ++i)
 			for (int j = -ratio; j < +ratio; ++j)
-			for (int k = -1; k < 2; ++k)
+			for (int k = -ratio; k < +ratio; ++k)
 			{
 				var chunkId = GetChunkID(new Vector3(i, j, k) * _chunkSize.x + _playerTransform.position);
 				var chunkPos = chunkId * _chunkSize.x;

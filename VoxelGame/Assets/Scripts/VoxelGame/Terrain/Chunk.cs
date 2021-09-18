@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace VoxelGame.Terrain
@@ -19,9 +21,9 @@ namespace VoxelGame.Terrain
 		private List<Vector2> _uvs;
 
 		private class MeshFace
-		{ 
+		{
 			public int MeshIndex { get; set; }  // Points to the actual 3D data.
-			
+
 			public int SliceDimension { get; set; }  // 0, 1, or 2 (used when you have to cut the rectangle up.
 			public Vector3Int SliceSpacePosition;
 			public Vector2Int Scale;
@@ -29,7 +31,7 @@ namespace VoxelGame.Terrain
 		#endregion
 
 		public Vector3Int Position { get; }
-		
+
 		private Voxel[,,] _voxels;
 
 		private void Awake()
@@ -39,25 +41,50 @@ namespace VoxelGame.Terrain
 
 		private void Start()
 		{
-			
+
 		}
 
-		public void Init(Vector3Int chunkSize)
+		public async Task Init(Vector3Int chunkSize)
 		{
 			_voxels = new Voxel[chunkSize.x, chunkSize.y, chunkSize.z];
 			ClearMesh();
-			InitVoxels();
-			CreateMesh();
+
+			var stopwatch = new System.Diagnostics.Stopwatch();
+			stopwatch.Start();
+
+			await Task.Run(() =>
+			{
+			//	try
+			//	{
+			//		Debug.Log("Stuff");
+					InitVoxels();
+					//Debug.Log("Created voxels!");
+					CreateMesh();
+			//	}
+			//	catch (Exception e)
+			//	{
+			//		Debug.Log($"Exception: {e.Message} Inner exception: {e.InnerException.Message}");
+			//	}
+			});
+
+			stopwatch.Stop();
+			Debug.Log($"Chunk took {stopwatch.ElapsedMilliseconds} milliseconds to create!");
+
 			ShowMesh();
 		}
 
 		private void InitVoxels()
 		{
+			//Debug.Log(_voxels.GetLength(0));
+			//Debug.Log(_voxels.GetLength(1));
+			//Debug.Log(_voxels.GetLength(2));
 			for (int z = 0; z < _voxels.GetLength(2); ++z)
 			for (int y = 0; y < _voxels.GetLength(1); ++y)
 			for (int x = 0; x < _voxels.GetLength(0); ++x)
 			{
+				//Debug.Log("In loop!");
 				_voxels[x, y, z] = ChunkManager.Instance.BiomeLogic.GetVoxel(new Vector3(x, y, z) + transform.position);
+						//Debug.Log("Created voxel!");
 				//if (_voxels[x, y, z] != null)
 				//{
 				//	Debug.Log($"Created Voxel ({x},{y},{z})!");
@@ -155,6 +182,9 @@ namespace VoxelGame.Terrain
 			{
 				if (GetVoxelByRelativeIndex(axis, x, y, offset, out var voxel))
 				{
+						//if (voxel == null) Debug.Log("Null");
+						//else Debug.Log("NOOOOOOOOT NULLLLLL!");
+
 					var debugPos = Rel2AbsVector(axis, new Vector3Int(x, y, offset));
 					//Debug.Log($"Checking voxel L({x},{y},{offset})-G({debugPos.x},{debugPos.y},{debugPos.z}).");
 

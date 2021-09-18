@@ -447,7 +447,7 @@ MonoBehaviour:
   _chunkSize: {x: 20, y: 20, z: 20}
   _voxelDatas: []
   _playerTransform: {fileID: 1828581181}
-  _playerViewDistance: 5
+  _playerViewDistance: 50
 --- !u!4 &1531652811
 Transform:
   m_ObjectHideFlags: 0

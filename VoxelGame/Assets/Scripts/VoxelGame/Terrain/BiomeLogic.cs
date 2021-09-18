@@ -26,58 +26,58 @@ namespace VoxelGame.Terrain
 		{
 			//return _tempVoxels.ContainsKey(voxelWorldPosition);
 
-			//var value = GetValue(voxelWorldPosition);
-			//if (value < 0.5f)
-			//{
-			//	return false;
-			//}
-			//else
-			//{
-			//	return true;
-			//}
-
-			var height = GetValue(voxelWorldPosition);
-			if (height > voxelWorldPosition.y)
-			{
-				return true;
-			}
-			else
+			var value = GetValue(voxelWorldPosition);
+			if (value < 0.5f)
 			{
 				return false;
 			}
+			else
+			{
+				return true;
+			}
+
+			//var height = GetValue(voxelWorldPosition);
+			//if (height > voxelWorldPosition.y)
+			//{
+			//	return true;
+			//}
+			//else
+			//{
+			//	return false;
+			//}
 		}
 
 		public Voxel GetVoxel(Vector3 voxelWorldPosition)
 		{
 			//_tempVoxels.TryGetValue(voxelWorldPosition, out Voxel voxel);
-
 			//return voxel;
-			//var value = GetValue(voxelWorldPosition);
-			//if (value < 0.5F)
-			//{
-			//	return null;
-			//}
-			//else
-			//{
-			//	return new Voxel(0, 0);
-			//}
 
-			var height = GetValue(voxelWorldPosition);
-			if (height > voxelWorldPosition.y)
-			{
-				return new Voxel(0, 0);
-			}
-			else
+			var value = GetValue(voxelWorldPosition);
+			if (value < 0.5F)
 			{
 				return null;
 			}
+			else
+			{
+				return new Voxel(0, 0);
+			}
+
+			//var height = GetValue(voxelWorldPosition);
+			//if (height > voxelWorldPosition.y)
+			//{
+			//	return new Voxel(0, 0);
+			//}
+			//else
+			//{
+			//	return null;
+			//}
 		}
 
 		private float GetValue(Vector3 voxelWorldPosition)
 		{
-			//return PerlinNoise3D.Noise(voxelWorldPosition * 0.1F + _offset);
-			var pos = voxelWorldPosition * 0.1F + _offset;
-			return Mathf.PerlinNoise(pos.x, pos.z) * 10;
+			return PerlinNoise3D.Noise(voxelWorldPosition * 0.01F + _offset);
+			//var pos = voxelWorldPosition * 0.1F + _offset;
+			//return Mathf.PerlinNoise(pos.x, pos.z) * 10;
 		}
 	}
 }
