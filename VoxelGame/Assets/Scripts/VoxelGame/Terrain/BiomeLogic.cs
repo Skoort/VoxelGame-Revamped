@@ -82,5 +82,16 @@ namespace VoxelGame.Terrain
 			var pos = voxelWorldPosition * 0.035F + _offset;
 			return Mathf.PerlinNoise(pos.x, pos.z) * 15;
 		}
+
+		public int GetHeight(Vector3 voxelWorldPosition)
+		{
+			var pos = voxelWorldPosition * 0.035F + _offset;
+			if (voxelWorldPosition.x == 3)
+			{
+				return 1;
+			}
+			//return Mathf.FloorToInt(Mathf.PerlinNoise(pos.x, pos.z) * 15);
+			return 0;
+		}
 	}
 }

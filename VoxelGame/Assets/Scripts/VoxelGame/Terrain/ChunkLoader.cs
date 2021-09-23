@@ -15,6 +15,8 @@ namespace VoxelGame.Terrain
 
         public ChunkLoader(int loadXChunksPerSecond)
         {
+			_chunkLoadQueue = new SimplePriorityQueue<Chunk>();
+
             _loadXChunksPerSecond = loadXChunksPerSecond;
             _timeBetweenLoads = 1 / (float) _loadXChunksPerSecond;
             _loadCountdown = _timeBetweenLoads;
@@ -38,7 +40,7 @@ namespace VoxelGame.Terrain
             _loadCountdown -= deltaTime;
             if (_loadCountdown <= 0)
             {
-                chunk.
+                //chunk.
 
                 _loadCountdown = _timeBetweenLoads;
             }

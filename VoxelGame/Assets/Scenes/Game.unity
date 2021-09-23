@@ -444,7 +444,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _worldSeed: 0
   _chunkPrefab: {fileID: 6746295407634173444, guid: 5d78c3d49de314747921acdf12eb90d4, type: 3}
-  _chunkSize: {x: 20, y: 20, z: 20}
+  _chunkSize: {x: 20, y: 1}
   _voxelDatas: []
   _playerTransform: {fileID: 1828581181}
   _playerViewDistance: 50

@@ -11,10 +11,10 @@ namespace VoxelGame.Terrain
 
 		[SerializeField] private Chunk _chunkPrefab = null;
 
-		[SerializeField] private Vector3Int _chunkSize = new Vector3Int(16, 16, 16);
-		public Vector3Int ChunkSize => _chunkSize;
+		[SerializeField] private Vector2Int _chunkSize = new Vector2Int(32, 32);
+		public Vector2Int ChunkSize => _chunkSize;
 
-		private Dictionary<Vector3Int, Chunk> _chunks;
+		private Dictionary<Vector2Int, Chunk> _chunks;
 
 		[SerializeField] private VoxelData[] _voxelDatas = null;
 
@@ -43,8 +43,10 @@ namespace VoxelGame.Terrain
 		{
 			BiomeLogic = new BiomeLogic(_worldSeed);
 
-			_chunks = new Dictionary<Vector3Int, Chunk>();
+			_chunks = new Dictionary<Vector2Int, Chunk>();
 			_loadTimer = _loadCooldown;
+
+			ShowChunksWithinView();
 		}
 
 		private float _loadCooldown = 0.1F;
@@ -55,14 +57,14 @@ namespace VoxelGame.Terrain
 			if (_loadTimer <= 0)
 			{
 				//Debug.Log("Loading chunks!");
-				ShowChunksWithinView();
+				//ShowChunksWithinView();
 				_loadTimer = _loadCooldown;
 			}
 		}
 
-		private Vector3Int GetChunkID(Vector3 pos)
+		private Vector2Int GetChunkID(Vector3 pos)
 		{
-			return Vector3Int.FloorToInt(pos / _chunkSize.x);
+			return Vector2Int.FloorToInt(pos / _chunkSize.x);
 		}
 
 		private void ShowChunksWithinView()
@@ -72,27 +74,27 @@ namespace VoxelGame.Terrain
 			//Debug.Log(ratio);
 
 			// Get the Chunks enveloping the player.
-			for (int i = -ratio; i < +ratio; ++i)
-			for (int j = -ratio; j < +ratio; ++j)
-			//for (int k = -ratio; k < +ratio; ++k)
-			for (int k = -1; k < 1; ++k)
+			//for (int j = -ratio; j < +ratio; ++j)
+			//for (int i = -ratio; i < +ratio; ++i)
+			int i = 0;
+			int j = 0;
 			{
-				var chunkId = GetChunkID(new Vector3(i, j, k) * _chunkSize.x + _playerTransform.position);
-				var chunkPos = chunkId * _chunkSize.x;
+				var chunkId = GetChunkID(new Vector3(i * _chunkSize.x, 0, j * _chunkSize.y) + _playerTransform.position);
+				var chunkPos = new Vector3Int(chunkId.x * _chunkSize.x, 0, chunkId.y * _chunkSize.y);
 
 				if (_chunks.TryGetValue(chunkId, out var chunk))
 				{
-					//Debug.Log("Reactivating chunk!");
 					if (chunk.gameObject.activeInHierarchy)
 					{
+						Debug.Log("Reactivating chunk!");
 						chunk.gameObject.SetActive(true);
 					}	
 				}
 				else
 				{  // We have to create this Chunk.
-					//Debug.Log("Spawning Chunk " + chunkId);
+					Debug.Log("Spawning Chunk " + chunkId);
 					chunk = Instantiate(_chunkPrefab, chunkPos, Quaternion.identity, this.transform);
-					chunk.Init();
+					chunk.Load(false, new System.Threading.CancellationToken());
 
 					_chunks.Add(chunkId, chunk);
 				}
