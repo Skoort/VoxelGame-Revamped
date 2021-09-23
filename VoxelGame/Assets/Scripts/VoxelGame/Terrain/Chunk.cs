@@ -164,7 +164,7 @@ namespace VoxelGame.Terrain
 			for (int x = 0; x < _width; ++x)
 			{
 				var biome = 0; // TODO: Set the biome type.
-				var height = _heightmap[x, z];
+				var height = _heightmap[x + 1, z + 1];
 				
 				var min_height = height - 1;  // One less than the coordinate of the lowest ground block at this x and z coord..
 				var max_height = height + 1;  // Y coordinate of the highest air block with this x and z coord..
