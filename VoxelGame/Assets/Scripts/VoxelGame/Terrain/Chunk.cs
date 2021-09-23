@@ -63,7 +63,7 @@ namespace VoxelGame.Terrain
 
 		}
 
-		public void Load(bool shouldLoadFromFile, CancellationToken destroyRequestedToken)
+		public async Task Load(bool shouldLoadFromFile, CancellationToken destroyRequestedToken)
 		{
 			Position = Vector3Int.FloorToInt(transform.position);
 
@@ -72,21 +72,28 @@ namespace VoxelGame.Terrain
 
 			Status = LoadStatus.LOADING;
 
-			//await Task.Run(() =>
-			//{
-				if (shouldLoadFromFile)
+			await Task.Run(() =>
+			{
+				try
 				{
-					LoadMapsAndMesh();
+					if (shouldLoadFromFile)
+					{
+						LoadMapsAndMesh();
+					}
+					else
+					{
+						Initialize();
+						GenerateBiomesmap();
+						GenerateHeightmap();
+						GenerateVoxels();
+						GenerateMesh();
+					}
 				}
-				else
+				catch (Exception e)
 				{
-					Initialize();
-					GenerateBiomesmap();
-					GenerateHeightmap();
-					GenerateVoxels();
-					GenerateMesh();
+					Debug.Log($"Something went wrong! {e.Message} {e.InnerException?.Message}");
 				}
-			//}, destroyRequestedToken);
+			}, destroyRequestedToken);
 
 			Status = LoadStatus.FINISHED_LOADING;
 
@@ -188,22 +195,19 @@ namespace VoxelGame.Terrain
 			}
 		}
 
-		private void ClearMesh()
+		private void ClearMeshBuffers()
 		{
-			_meshFilter.mesh = null;
-
-			_mesh = null;
 			_unusedMeshData = new Queue<MeshFace>();
 			_greedyMeshData = new List<MeshFace>();
 			_faces = new List<int>();
-			_vertices = new List<Vector3>(1000);
-			_normals = new List<Vector3>(1000);
-			_uvs = new List<Vector2>(1000);
+			_vertices = new List<Vector3>();
+			_normals = new List<Vector3>();
+			_uvs = new List<Vector2>();
 		}
 		
 		private void GenerateMesh()
 		{
-			ClearMesh();
+			ClearMeshBuffers();
 
 			for (int axis = 0; axis <= 2; ++axis)
 			{
@@ -211,7 +215,6 @@ namespace VoxelGame.Terrain
 				{ 
 					for (int dir = 0; dir <= 1; ++dir)
 					{
-						Debug.Log($"Axis: {axis} Offset: {offset} Dir: {dir}");
 						CreateMeshSlice(axis, offset, dir);
 					}
 				}
@@ -291,13 +294,13 @@ namespace VoxelGame.Terrain
 			{
 				if (GetVoxelByRelativeIndex(axis, x, y, offset, out var voxel))
 				{
-					Debug.Log("Found a voxel to make faces for!");
+					//Debug.Log("Found a voxel to make faces for!");
 					Rel2AbsIndex(axis, x, y, offset + (dir == 0 ? +1 : -1), out int outAbsX, out int outAbsY, out int outAbsZ);
 
 					// A face should only be drawn if the voxel in front/behind (relative) this one doesn't exist.
 					if (!IsSolid(outAbsX, outAbsY, outAbsZ))
 					{
-						Debug.Log("Voxel is visible!");
+						//Debug.Log("Voxel is visible!");
 
 						GetVoxelByRelativeIndex(axis, x, y - 1, offset, out var topNeighbor);
 						GetVoxelByRelativeIndex(axis, x - 1, y, offset, out var lftNeighbor);
@@ -313,7 +316,7 @@ namespace VoxelGame.Terrain
 						if (topMesh != null && topMesh.Scale.x == 1)
 						{
 							// Growing a rect wider than 1 unit is handled by creating another rect and merging the two.
-							Debug.Log("The top (relative) voxel's rect is only 1 unit wide. Extending it downwards by 1!");
+							//Debug.Log("The top (relative) voxel's rect is only 1 unit wide. Extending it downwards by 1!");
 									
 							++topMesh.Scale.y;
 							usedMesh = topMesh;
@@ -324,8 +327,8 @@ namespace VoxelGame.Terrain
 							// Because of the way we iterate, the rect grows to the right as much as possible
 							// before exploring a way to grow downwards. Therefore, a rect that has grown
 							// downwards cannot be grown to the right anymore.
-							Debug.Log("Left (relative) voxel has a rect we can use!");
-							Debug.Log("Extending the left (relative) voxel's rect to the right by 1!");
+							//Debug.Log("Left (relative) voxel has a rect we can use!");
+							//Debug.Log("Extending the left (relative) voxel's rect to the right by 1!");
 
 							++lftMesh.Scale.x;
 
@@ -333,10 +336,10 @@ namespace VoxelGame.Terrain
 								&& lftMesh.SliceSpacePosition.x == topMesh.SliceSpacePosition.x
 								&& lftMesh.Scale.x == topMesh.Scale.x)
 							{
-								Debug.Log("Extending the left voxel's rect caused it to be merged with the top voxel's rect!");
+								//Debug.Log("Extending the left voxel's rect caused it to be merged with the top voxel's rect!");
 								++topMesh.Scale.y;
 									
-								Debug.Log("Recycling the left voxel's rect!");
+								//Debug.Log("Recycling the left voxel's rect!");
 								RecycleMeshFace(lftMesh);
 								for (int i = 1; i < lftMesh.Scale.x; ++i)
 								{
@@ -354,7 +357,7 @@ namespace VoxelGame.Terrain
 
 						if (usedMesh == null)
 						{
-							Debug.Log("Created a rect for this voxel!");
+							//Debug.Log("Created a rect for this voxel!");
 
 							usedMesh = CreateMeshFace(axis, offset, dir, x, y);
 						}
@@ -440,11 +443,6 @@ namespace VoxelGame.Terrain
 
 		private void OnDrawGizmosSelected()
 		{
-			//Gizmos.color = Color.red;
-			//foreach (var voxel in _voxels)
-			//{
-			//	Gizmos.DrawCube(voxel.Key + new Vector3(0.5F, 0.5F, 0.5F) + Position, Vector3.one);
-			//}
 			Gizmos.color = Color.blue;
 			Gizmos.DrawWireMesh(_mesh, 0, Position);
 		}

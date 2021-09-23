@@ -45,8 +45,6 @@ namespace VoxelGame.Terrain
 
 			_chunks = new Dictionary<Vector2Int, Chunk>();
 			_loadTimer = _loadCooldown;
-
-			ShowChunksWithinView();
 		}
 
 		private float _loadCooldown = 0.1F;
@@ -57,14 +55,15 @@ namespace VoxelGame.Terrain
 			if (_loadTimer <= 0)
 			{
 				//Debug.Log("Loading chunks!");
-				//ShowChunksWithinView();
+				ShowChunksWithinView();
 				_loadTimer = _loadCooldown;
 			}
 		}
 
 		private Vector2Int GetChunkID(Vector3 pos)
 		{
-			return Vector2Int.FloorToInt(pos / _chunkSize.x);
+			pos.Scale(new Vector3(1.0F / _chunkSize.x, 0, 1.0F / _chunkSize.y));
+			return new Vector2Int(Mathf.FloorToInt(pos.x), Mathf.FloorToInt(pos.z));
 		}
 
 		private void ShowChunksWithinView()
@@ -74,25 +73,23 @@ namespace VoxelGame.Terrain
 			//Debug.Log(ratio);
 
 			// Get the Chunks enveloping the player.
-			//for (int j = -ratio; j < +ratio; ++j)
-			//for (int i = -ratio; i < +ratio; ++i)
-			int i = 0;
-			int j = 0;
+			for (int z = -ratio; z < +ratio; ++z)
+			for (int x = -ratio; x < +ratio; ++x)
 			{
-				var chunkId = GetChunkID(new Vector3(i * _chunkSize.x, 0, j * _chunkSize.y) + _playerTransform.position);
+				var chunkId = GetChunkID(new Vector3(x * _chunkSize.x, 0, z * _chunkSize.y) + _playerTransform.position);
 				var chunkPos = new Vector3Int(chunkId.x * _chunkSize.x, 0, chunkId.y * _chunkSize.y);
 
 				if (_chunks.TryGetValue(chunkId, out var chunk))
 				{
-					if (chunk.gameObject.activeInHierarchy)
+					if (!chunk.gameObject.activeInHierarchy)
 					{
-						Debug.Log("Reactivating chunk!");
+						//Debug.Log("Reactivating chunk!");
 						chunk.gameObject.SetActive(true);
 					}	
 				}
 				else
 				{  // We have to create this Chunk.
-					Debug.Log("Spawning Chunk " + chunkId);
+					//Debug.Log("Spawning Chunk " + chunkId);
 					chunk = Instantiate(_chunkPrefab, chunkPos, Quaternion.identity, this.transform);
 					chunk.Load(false, new System.Threading.CancellationToken());
 
