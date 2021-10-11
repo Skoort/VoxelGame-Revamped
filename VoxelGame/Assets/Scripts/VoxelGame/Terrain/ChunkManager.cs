@@ -60,10 +60,18 @@ namespace VoxelGame.Terrain
 			}
 		}
 
-		private Vector2Int GetChunkID(Vector3 pos)
+		public Vector2Int GetChunkID(Vector3 pos)
 		{
 			pos.Scale(new Vector3(1.0F / _chunkSize.x, 0, 1.0F / _chunkSize.y));
 			return new Vector2Int(Mathf.FloorToInt(pos.x), Mathf.FloorToInt(pos.z));
+		}
+
+		// Get the Chunk containing this position.
+		public Chunk GetChunk(Vector3 pos)
+		{
+			_chunks.TryGetValue(GetChunkID(pos), out var chunk);
+
+			return chunk;
 		}
 
 		private void ShowChunksWithinView()

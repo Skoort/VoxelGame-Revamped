@@ -11,7 +11,7 @@ namespace VoxelGame.Terrain
 	public class Chunk : MonoBehaviour
 	{
 		public enum LoadStatus
-		{ 
+		{
 			LOADING,
 			FINISHED_LOADING
 		}
@@ -52,6 +52,10 @@ namespace VoxelGame.Terrain
 		private int _depth;
 
 		public bool HasBeenModified { get; private set; }
+
+
+		private bool _shouldActivateCollisions = false;
+		private MeshCollider _meshCollider;
 
 		private void Awake()
 		{
@@ -97,15 +101,16 @@ namespace VoxelGame.Terrain
 
 			Status = LoadStatus.FINISHED_LOADING;
 
+			ShowMesh();
+			ActivateCollisions();
+
 			//stopwatch.Stop();
 			//Debug.Log($"Chunk took {stopwatch.ElapsedMilliseconds} milliseconds to create!");
-
-			ShowMesh();
 		}
 
 		private void LoadMapsAndMesh()
-		{ 
-		
+		{
+
 		}
 
 		private void Initialize()
@@ -116,30 +121,30 @@ namespace VoxelGame.Terrain
 		}
 
 		private void GenerateBiomesmap()
-		{ 
-		
+		{
+
 		}
 
 		private void GenerateHeightmap()
-		{ 
+		{
 			_heightmap = new int[_width + 2, _depth + 2];
 			for (int z = 0; z < _heightmap.GetLength(1); ++z)
-			for (int x = 0; x < _heightmap.GetLength(0); ++x)
-			{
-				var height = _heightmap[x, z] = ChunkManager.Instance.BiomeLogic.GetHeight(new Vector3(x - 1, 0, z - 1) + Position);
-				if (height > _maxHeight)
+				for (int x = 0; x < _heightmap.GetLength(0); ++x)
 				{
-					_maxHeight = height;
+					var height = _heightmap[x, z] = ChunkManager.Instance.BiomeLogic.GetHeight(new Vector3(x - 1, 0, z - 1) + Position);
+					if (height > _maxHeight)
+					{
+						_maxHeight = height;
+					}
+					if (height < _minHeight)
+					{
+						_minHeight = height;
+					}
 				}
-				if (height < _minHeight)
-				{
-					_minHeight = height;
-				}
-			}
 
 			_dimensions[1] = _maxHeight - _minHeight + 1;
 		}
-		
+
 		private IEnumerable<int> GetNeighboringHeights(int x, int z)
 		{
 			// The heightmap includes the outer layer of voxels.
@@ -147,19 +152,19 @@ namespace VoxelGame.Terrain
 			z = z + 1;
 
 			if (x < _heightmap.GetLength(0))
-			{ 
+			{
 				yield return _heightmap[x + 1, z];
 			}
 			if (z < _heightmap.GetLength(1))
-			{ 
+			{
 				yield return _heightmap[x, z + 1];
 			}
 			if (x > 0)
-			{ 
+			{
 				yield return _heightmap[x - 1, z];
 			}
 			if (z > 0)
-			{ 
+			{
 				yield return _heightmap[x, z - 1];
 			}
 		}
@@ -168,31 +173,31 @@ namespace VoxelGame.Terrain
 		{
 			_voxels = new Dictionary<Vector3Int, Voxel>();
 			for (int z = 0; z < _depth; ++z)
-			for (int x = 0; x < _width; ++x)
-			{
-				var biome = 0; // TODO: Set the biome type.
-				var height = _heightmap[x + 1, z + 1];
-				
-				var min_height = height - 1;  // One less than the coordinate of the lowest ground block at this x and z coord..
-				var max_height = height + 1;  // Y coordinate of the highest air block with this x and z coord..
-				foreach (var h in GetNeighboringHeights(x, z))
+				for (int x = 0; x < _width; ++x)
 				{
-					min_height = System.Math.Min(min_height, h);
-					max_height = System.Math.Max(max_height, h);
-				}
-				
-				// Create the blocks
-				for (var y = height; y > min_height; --y)
-				{
-					var pos = new Vector3Int(x, y, z);
-					
-					int voxelType = 0;  // TODO: Set the voxel type.
+					var biome = 0; // TODO: Set the biome type.
+					var height = _heightmap[x + 1, z + 1];
 
-					var voxel = new Voxel(voxelType, biome);
-					
-					_voxels.Add(pos, voxel);
+					var min_height = height - 1;  // One less than the coordinate of the lowest ground block at this x and z coord..
+					var max_height = height + 1;  // Y coordinate of the highest air block with this x and z coord..
+					foreach (var h in GetNeighboringHeights(x, z))
+					{
+						min_height = System.Math.Min(min_height, h);
+						max_height = System.Math.Max(max_height, h);
+					}
+
+					// Create the blocks
+					for (var y = height; y > min_height; --y)
+					{
+						var pos = new Vector3Int(x, y, z);
+
+						int voxelType = 0;  // TODO: Set the voxel type.
+
+						var voxel = new Voxel(voxelType, biome);
+
+						_voxels.Add(pos, voxel);
+					}
 				}
-			}
 		}
 
 		private void ClearMeshBuffers()
@@ -204,7 +209,7 @@ namespace VoxelGame.Terrain
 			_normals = new List<Vector3>();
 			_uvs = new List<Vector2>();
 		}
-		
+
 		private void GenerateMesh()
 		{
 			ClearMeshBuffers();
@@ -212,7 +217,7 @@ namespace VoxelGame.Terrain
 			for (int axis = 0; axis <= 2; ++axis)
 			{
 				for (int offset = 0; offset < _dimensions[axis]; ++offset)
-				{ 
+				{
 					for (int dir = 0; dir <= 1; ++dir)
 					{
 						CreateMeshSlice(axis, offset, dir);
@@ -222,9 +227,7 @@ namespace VoxelGame.Terrain
 
 			PositionMeshSlices();
 		}
-
-		#region --- Local functions ---
-
+		
 		//  axis | relAxisX | relAxisY
 		// ------+----------+----------
 		//    Z  |    X     |    Y   
@@ -267,12 +270,10 @@ namespace VoxelGame.Terrain
 		bool GetVoxelByRelativeIndex(int axis, int relX, int relY, int relZ, out Voxel voxel)
 		{
 			Rel2AbsIndex(axis, relX, relY, relZ, out int absX, out int absY, out int absZ);
-			
+
 			_voxels.TryGetValue(new Vector3Int(absX, absY, absZ), out voxel);
 			return voxel != null;
 		}
-
-		#endregion
 
 		private bool IsSolid(int x, int y, int z)
 		{
@@ -290,82 +291,82 @@ namespace VoxelGame.Terrain
 			var faceIndex = axis + dir * 3;
 
 			for (int y = 0; y < _dimensions[relAxisY]; ++y)
-			for (int x = 0; x < _dimensions[relAxisX]; ++x)
-			{
-				if (GetVoxelByRelativeIndex(axis, x, y, offset, out var voxel))
+				for (int x = 0; x < _dimensions[relAxisX]; ++x)
 				{
-					//Debug.Log("Found a voxel to make faces for!");
-					Rel2AbsIndex(axis, x, y, offset + (dir == 0 ? +1 : -1), out int outAbsX, out int outAbsY, out int outAbsZ);
-
-					// A face should only be drawn if the voxel in front/behind (relative) this one doesn't exist.
-					if (!IsSolid(outAbsX, outAbsY, outAbsZ))
+					if (GetVoxelByRelativeIndex(axis, x, y, offset, out var voxel))
 					{
-						//Debug.Log("Voxel is visible!");
+						//Debug.Log("Found a voxel to make faces for!");
+						Rel2AbsIndex(axis, x, y, offset + (dir == 0 ? +1 : -1), out int outAbsX, out int outAbsY, out int outAbsZ);
 
-						GetVoxelByRelativeIndex(axis, x, y - 1, offset, out var topNeighbor);
-						GetVoxelByRelativeIndex(axis, x - 1, y, offset, out var lftNeighbor);
-
-						var topMesh = (topNeighbor != null && topNeighbor.FaceIndices[faceIndex] != -1)
-							? _greedyMeshData[topNeighbor.FaceIndices[faceIndex]]
-							: null;
-						var lftMesh = (lftNeighbor != null && lftNeighbor.FaceIndices[faceIndex] != -1)
-							? _greedyMeshData[lftNeighbor.FaceIndices[faceIndex]]
-							: null;
-
-						MeshFace usedMesh = null;
-						if (topMesh != null && topMesh.Scale.x == 1)
+						// A face should only be drawn if the voxel in front/behind (relative) this one doesn't exist.
+						if (!IsSolid(outAbsX, outAbsY, outAbsZ))
 						{
-							// Growing a rect wider than 1 unit is handled by creating another rect and merging the two.
-							//Debug.Log("The top (relative) voxel's rect is only 1 unit wide. Extending it downwards by 1!");
-									
-							++topMesh.Scale.y;
-							usedMesh = topMesh;
-						}
+							//Debug.Log("Voxel is visible!");
 
-						if (usedMesh == null && lftMesh != null && lftMesh.Scale.y == 1)
-						{
-							// Because of the way we iterate, the rect grows to the right as much as possible
-							// before exploring a way to grow downwards. Therefore, a rect that has grown
-							// downwards cannot be grown to the right anymore.
-							//Debug.Log("Left (relative) voxel has a rect we can use!");
-							//Debug.Log("Extending the left (relative) voxel's rect to the right by 1!");
+							GetVoxelByRelativeIndex(axis, x, y - 1, offset, out var topNeighbor);
+							GetVoxelByRelativeIndex(axis, x - 1, y, offset, out var lftNeighbor);
 
-							++lftMesh.Scale.x;
+							var topMesh = (topNeighbor != null && topNeighbor.FaceIndices[faceIndex] != -1)
+								? _greedyMeshData[topNeighbor.FaceIndices[faceIndex]]
+								: null;
+							var lftMesh = (lftNeighbor != null && lftNeighbor.FaceIndices[faceIndex] != -1)
+								? _greedyMeshData[lftNeighbor.FaceIndices[faceIndex]]
+								: null;
 
-							if (   topMesh != null
-								&& lftMesh.SliceSpacePosition.x == topMesh.SliceSpacePosition.x
-								&& lftMesh.Scale.x == topMesh.Scale.x)
+							MeshFace usedMesh = null;
+							if (topMesh != null && topMesh.Scale.x == 1)
 							{
-								//Debug.Log("Extending the left voxel's rect caused it to be merged with the top voxel's rect!");
-								++topMesh.Scale.y;
-									
-								//Debug.Log("Recycling the left voxel's rect!");
-								RecycleMeshFace(lftMesh);
-								for (int i = 1; i < lftMesh.Scale.x; ++i)
-								{
-									GetVoxelByRelativeIndex(axis, x - i, y, offset, out var voxelToFix);
-									voxelToFix.FaceIndices[faceIndex] = topMesh.MeshIndex;  // voxelToFix can't be null.
-								}
+								// Growing a rect wider than 1 unit is handled by creating another rect and merging the two.
+								//Debug.Log("The top (relative) voxel's rect is only 1 unit wide. Extending it downwards by 1!");
 
+								++topMesh.Scale.y;
 								usedMesh = topMesh;
 							}
-							else
+
+							if (usedMesh == null && lftMesh != null && lftMesh.Scale.y == 1)
 							{
-								usedMesh = lftMesh;
+								// Because of the way we iterate, the rect grows to the right as much as possible
+								// before exploring a way to grow downwards. Therefore, a rect that has grown
+								// downwards cannot be grown to the right anymore.
+								//Debug.Log("Left (relative) voxel has a rect we can use!");
+								//Debug.Log("Extending the left (relative) voxel's rect to the right by 1!");
+
+								++lftMesh.Scale.x;
+
+								if (topMesh != null
+									&& lftMesh.SliceSpacePosition.x == topMesh.SliceSpacePosition.x
+									&& lftMesh.Scale.x == topMesh.Scale.x)
+								{
+									//Debug.Log("Extending the left voxel's rect caused it to be merged with the top voxel's rect!");
+									++topMesh.Scale.y;
+
+									//Debug.Log("Recycling the left voxel's rect!");
+									RecycleMeshFace(lftMesh);
+									for (int i = 1; i < lftMesh.Scale.x; ++i)
+									{
+										GetVoxelByRelativeIndex(axis, x - i, y, offset, out var voxelToFix);
+										voxelToFix.FaceIndices[faceIndex] = topMesh.MeshIndex;  // voxelToFix can't be null.
+									}
+
+									usedMesh = topMesh;
+								}
+								else
+								{
+									usedMesh = lftMesh;
+								}
 							}
+
+							if (usedMesh == null)
+							{
+								//Debug.Log("Created a rect for this voxel!");
+
+								usedMesh = CreateMeshFace(axis, offset, dir, x, y);
+							}
+
+							voxel.AddFace(faceIndex, usedMesh.MeshIndex);
 						}
-
-						if (usedMesh == null)
-						{
-							//Debug.Log("Created a rect for this voxel!");
-
-							usedMesh = CreateMeshFace(axis, offset, dir, x, y);
-						}
-
-						voxel.AddFace(faceIndex, usedMesh.MeshIndex);
 					}
 				}
-			}
 		}
 
 		private MeshFace CreateMeshFace(int sliceDimension, int sliceOffset, int plusOrMinus, int x, int y)
@@ -392,12 +393,12 @@ namespace VoxelGame.Terrain
 				_vertices.AddRange(VoxelData.Vertices[voxelFaceIndex]);
 				_normals.AddRange(VoxelData.Normals[voxelFaceIndex]);
 				_uvs.AddRange(VoxelData.UVs2[voxelFaceIndex]);
-				_faces.AddRange(Enumerable.Range(0,4).Select(i => i + meshData.MeshIndex * 4));
+				_faces.AddRange(Enumerable.Range(0, 4).Select(i => i + meshData.MeshIndex * 4));
 			}
 			meshData.Scale = Vector2Int.one;
 			meshData.SliceDimension = sliceDimension;
 			meshData.SliceSpacePosition = new Vector3Int(x, y, sliceOffset);
-			
+
 			return meshData;
 		}
 
@@ -437,7 +438,7 @@ namespace VoxelGame.Terrain
 			_mesh.SetNormals(_normals);
 			_mesh.SetUVs(0, _uvs);
 			_mesh.SetIndices(_faces, MeshTopology.Quads, 0);
-			
+
 			_meshFilter.mesh = _mesh;
 		}
 
@@ -445,6 +446,191 @@ namespace VoxelGame.Terrain
 		{
 			Gizmos.color = Color.blue;
 			Gizmos.DrawWireMesh(_mesh, 0, Position);
+		}
+
+		public IEnumerable<Voxel> GetNeighbors(Vector3Int pos)
+		{
+			yield return VoxelOrNull(pos + new Vector3Int(+1, 0, 0));
+			yield return VoxelOrNull(pos + new Vector3Int(0, +1, 0));
+			yield return VoxelOrNull(pos + new Vector3Int(0, 0, +1));
+			yield return VoxelOrNull(pos + new Vector3Int(-1, 0, 0));
+			yield return VoxelOrNull(pos + new Vector3Int(0, -1, 0));
+			yield return VoxelOrNull(pos + new Vector3Int(0, 0, -1));
+		}
+
+		public IEnumerable<Vector3Int> GetNeighboringPositions(Vector3Int pos)
+		{
+			yield return pos + new Vector3Int(+1,  0,  0);
+			yield return pos + new Vector3Int( 0, +1,  0);
+			yield return pos + new Vector3Int( 0,  0, +1);
+			yield return pos + new Vector3Int(-1,  0,  0);
+			yield return pos + new Vector3Int( 0, -1,  0);
+			yield return pos + new Vector3Int( 0,  0, -1);
+		}
+
+		private Voxel VoxelOrNull(Vector3Int pos)
+		{
+			if (_voxels.ContainsKey(pos))
+			{
+				return _voxels[pos];
+			}
+			else
+			{
+				return null;
+			}
+		}
+
+		public void CreateBlock(Vector3Int localPos, int dataId)
+		{
+			if (_voxels.ContainsKey(localPos))
+			{
+				return;
+			}
+
+			var voxel = new Voxel(dataId, 0);  // TODO: Add biome ID obtained from x, z coordinate.
+
+			CreateOrDestroyBlock(localPos, voxel, shouldCreate: true);
+		}
+
+		public void DestroyBlock(Vector3Int localPos)
+		{
+			if (!_voxels.TryGetValue(localPos, out var voxel))
+			{
+				return;
+			}
+
+			CreateOrDestroyBlock(localPos, voxel, shouldCreate: false);
+		}
+
+		private void CreateOrDestroyBlock(Vector3Int localPos, Voxel voxel, bool shouldCreate)
+		{
+			var neighboringPositions = GetNeighboringPositions(localPos);
+
+			int i = 0;
+			foreach (var position in neighboringPositions)
+			{
+				var neighbor = VoxelOrNull(position);
+				var axis = i % 3;
+
+				var localPosRel = Rel2AbsVector(axis, localPos);
+				var positionRel = Rel2AbsVector(axis, position);
+				var localPosPlusMinus = i < 3 ? 0 : 1;
+				var positionPlusMinus = i < 3 ? 1 : 0;  // If this voxel's face is in the 1 direction, then that face's neighboring face is in the 0 direction.
+				if (neighbor != null)
+				{
+					var neighborsFaceId = neighbor.FaceIndices[i + (i < 3 ? +3 : -3)];
+					if (shouldCreate)
+					{
+						// Break up this rect for its neighbor's opposite face (rectId +/- 3).
+						BreakUpRect(_greedyMeshData[neighbor.FaceIndices[neighborsFaceId]], localPosRel, positionPlusMinus);
+					}
+					else
+					{
+						// Create a new rect for its neighbor's opposite face (rectId +/- 3).
+						var face = CreateMeshFace(axis, positionRel.z, positionPlusMinus, positionRel.x, positionRel.y);
+						neighbor.FaceIndices[neighborsFaceId] = face.MeshIndex;
+					}
+				}
+				else
+				{
+					if (shouldCreate)
+					{
+						// Create a new rect.
+						var face = CreateMeshFace(axis, localPosRel.z, localPosPlusMinus, localPosRel.x, localPosRel.y);
+						voxel.FaceIndices[i] = face.MeshIndex;
+					}
+					else
+					{
+						// Break up this rect.
+						BreakUpRect(_greedyMeshData[voxel.FaceIndices[i]], localPosRel, localPosPlusMinus);
+					}
+				}
+				++i;
+			}
+		}
+
+		// Rect is the rectangle that contains the voxel we want to remove. RelPosition is the position of that voxel. PlusOrMinus is whether it is the positive or negative face.
+		private void BreakUpRect(MeshFace rect, Vector3Int relPosition, int plusOrMinus)
+		{
+			// Because this rect exists, each voxel within its bounds should also exist.
+			var axis = rect.SliceDimension;
+			
+			var faceIndex = axis + plusOrMinus * 3;
+
+			RecycleMeshFace(rect);
+			_voxels[Rel2AbsVector(axis, relPosition)].RemFace(faceIndex);
+
+			MeshFace topRect = null;
+			MeshFace leftRect = null;
+			MeshFace rightRect = null;
+			MeshFace bottomRect = null;
+
+			for (int x = 0; x < rect.Scale.x; ++x)
+			{
+				for (int y = 0; y < rect.Scale.y; ++y)
+				{
+					var position = Rel2AbsVector(axis, rect.SliceSpacePosition + new Vector3Int(x, y, 0));
+					var voxel = _voxels[position];
+
+					if (y > relPosition.y)
+					{  // The top rect.
+						if (topRect == null)
+						{ 
+							topRect = CreateMeshFace(axis, rect.SliceSpacePosition.z, plusOrMinus, rect.SliceSpacePosition.x, rect.SliceSpacePosition.y);
+							topRect.Scale = new Vector2Int(rect.Scale.x, rect.Scale.y - relPosition.y);
+						}
+						voxel.FaceIndices[faceIndex] = topRect.MeshIndex;
+					} else
+					if (x < relPosition.x)
+					{  // The left rect.
+						if (leftRect == null)
+						{
+							leftRect = CreateMeshFace(axis, rect.SliceSpacePosition.z, plusOrMinus, rect.SliceSpacePosition.x, relPosition.y);
+							leftRect.Scale = new Vector2Int(relPosition.x - rect.SliceSpacePosition.x, rect.Scale.y - relPosition.y);
+						}
+						voxel.FaceIndices[faceIndex] = leftRect.MeshIndex;
+					} else
+					if (x > relPosition.x)
+					{  // The right rect.
+						if (rightRect == null)
+						{
+							rightRect = CreateMeshFace(axis, rect.SliceSpacePosition.z, plusOrMinus, relPosition.x + 1, relPosition.y);
+							rightRect.Scale = new Vector2Int(rect.Scale.x - (relPosition.x + 1), rect.Scale.y - relPosition.y);
+						}
+						voxel.FaceIndices[faceIndex] = rightRect.MeshIndex;
+					} else
+					if (y < relPosition.y)
+					{  // The bottom rect.
+						if (bottomRect == null)
+						{
+							bottomRect = CreateMeshFace(axis, rect.SliceSpacePosition.z, plusOrMinus, relPosition.x, relPosition.y + 1);
+							bottomRect.Scale = new Vector2Int(1, rect.Scale.y - (relPosition.y + 1));
+						}
+						voxel.FaceIndices[faceIndex] = bottomRect.MeshIndex;
+					}
+				}
+			}
+		}
+
+		public Voxel GetVoxel(Vector3Int pos)
+		{
+			_voxels.TryGetValue(pos, out var voxel);
+
+			return voxel;
+		}
+
+		public void RequestCollisions()
+		{
+			_shouldActivateCollisions = true;
+		}
+
+		private void ActivateCollisions()
+		{
+			if (_meshCollider == null)
+			{
+				_meshCollider = gameObject.AddComponent<MeshCollider>();
+				_meshCollider.sharedMesh = _mesh;
+			}
 		}
 	}
 }
