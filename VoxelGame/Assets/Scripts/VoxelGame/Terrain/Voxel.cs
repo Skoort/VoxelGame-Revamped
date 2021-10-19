@@ -8,7 +8,7 @@ namespace VoxelGame.Terrain
 			BiomeId = biomeId;
 		}
 
-		public int DataId { get; set; }  // Can change voxel type.
+		public int DataId { get; set; }  // Can change voxel type. 0 - Air, 1 - Dirt
 		public int BiomeId { get; private set; }  // Cannot change biome.
 
 		public int[] FaceIndices { get; } = new int[6] { -1, -1, -1, -1, -1, -1 };

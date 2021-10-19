@@ -95,9 +95,19 @@ namespace VoxelGame.Terrain
 
 		public int GetHeight(Vector3 voxelWorldPosition)
 		{
+			//if (voxelWorldPosition == new Vector3(0, 0, 0))
+			//{
+			//	return 1;
+			//}
+			//if (voxelWorldPosition == new Vector3(1, 0, 0))
+			//{
+			//	return 1;
+			//}
+			//return 0;
+
 			var swappedVoxelWorldPosition = new Vector3(voxelWorldPosition.z, 0, voxelWorldPosition.x);
 
-			var biomePos1 = Vector3.Scale(voxelWorldPosition + _offset , new Vector3(+0.005F, -0.001F));
+			var biomePos1 = Vector3.Scale(voxelWorldPosition + _offset, new Vector3(+0.005F, -0.001F));
 			var biomePos2 = Vector3.Scale(swappedVoxelWorldPosition + _offset2, new Vector3(-0.004F, -0.003F));
 			var cliffPos = Vector3.Scale(voxelWorldPosition + _offset2, new Vector3(-0.001F, +0.002F));
 
@@ -108,7 +118,8 @@ namespace VoxelGame.Terrain
 			if (biomeVal < 0.40F)
 			{
 				return GetFlatlandHeight(voxelWorldPosition, swappedVoxelWorldPosition);
-			} else
+			}
+			else
 			if (isCliffZone)
 			{
 				if (biomeVal < 0.6F)

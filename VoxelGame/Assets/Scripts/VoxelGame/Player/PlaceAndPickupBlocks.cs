@@ -50,22 +50,24 @@ namespace VoxelGame
 				posToAffect.z = SimpleMath.Mod(posToAffect.z, ChunkManager.Instance.ChunkSize.y);
 
 
-				//if (pickupOrPlace)
-				//{
-				//	chunkToAffect.CreateBlock(posToAffect, 0);  // TODO: Add support for item types (you get this info from the inventory you remove this item from).
-
-				//	PushOutAllItemDropsInBlock(chunkToAffect, posToAffect);  // How to push items out of big areas like furniture? My suggestion is to take that furnitures bounds as the rectangular prism.
-				//}
-				//else
-				//{
-				//	chunkToAffect.DestroyBlock(posToAffect);  // TODO: Support getting destroyed voxel's information.
-				//}
-
+				Debug.Log($"Hit block: {chunkToAffect.Position + posToAffect}");
 				if (_coroutine != null)
 				{
 					StopCoroutine(_coroutine);
 				}
 				_coroutine = StartCoroutine(DrawCube(chunkToAffect.Position + posToAffect + Vector3.one * 0.5F));
+
+
+				if (pickupOrPlace)
+				{
+					chunkToAffect.CreateBlock(posToAffect, 0);  // TODO: Add support for item types (you get this info from the inventory you remove this item from).
+
+					//PushOutAllItemDropsInBlock(chunkToAffect, posToAffect);  // How to push items out of big areas like furniture? My suggestion is to take that furnitures bounds as the rectangular prism.
+				}
+				else
+				{
+					chunkToAffect.DestroyBlock(posToAffect);  // TODO: Support getting destroyed voxel's information.
+				}
 			}
 		}
 

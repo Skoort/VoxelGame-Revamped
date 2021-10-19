@@ -623,10 +623,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _worldSeed: 0
   _chunkPrefab: {fileID: 6746295407634173444, guid: 5d78c3d49de314747921acdf12eb90d4, type: 3}
-  _chunkSize: {x: 20, y: 20}
+  _chunkSize: {x: 30, y: 30}
   _voxelDatas: []
   _playerTransform: {fileID: 1828581181}
-  _playerViewDistance: 150
+  _playerViewDistance: 120
 --- !u!4 &1531652811
 Transform:
   m_ObjectHideFlags: 0
@@ -961,7 +961,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3171374566700308657, guid: 6de2b385e5837ba45a04b5198c143d7c, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 15
+      value: 19.78
       objectReference: {fileID: 0}
     - target: {fileID: 3171374566700308657, guid: 6de2b385e5837ba45a04b5198c143d7c, type: 3}
       propertyPath: m_LocalPosition.z

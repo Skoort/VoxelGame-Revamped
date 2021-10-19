@@ -84,6 +84,7 @@ namespace VoxelGame.Terrain
 			for (int z = -ratio; z < +ratio; ++z)
 			for (int x = -ratio; x < +ratio; ++x)
 			{
+				//if (x < 0 || z < 0) continue;  // TODO: Remove
 				var chunkId = GetChunkID(new Vector3(x * _chunkSize.x, 0, z * _chunkSize.y) + _playerTransform.position);
 				var chunkPos = new Vector3Int(chunkId.x * _chunkSize.x, 0, chunkId.y * _chunkSize.y);
 
