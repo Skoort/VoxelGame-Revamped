@@ -56,8 +56,8 @@ namespace VoxelGame.Terrain
 
 			Status = LoadStatus.LOADING;
 
-			await Task.Run(() =>
-			{
+			//await Task.Run(() =>
+			//{
 				if (shouldLoadFromFile)
 				{
 					LoadMapsAndMesh();
@@ -71,7 +71,7 @@ namespace VoxelGame.Terrain
 					_mesher = new GreedyMesher(this);
 					_mesher.GenerateMesh();
 				}
-			}, destroyRequestedToken);
+			//}, destroyRequestedToken);
 
 			Status = LoadStatus.FINISHED_LOADING;
 
@@ -145,9 +145,10 @@ namespace VoxelGame.Terrain
 				var biome = 0; // TODO: Set the biome type.
 				var height = _heightmap[x + 1, z + 1];
 
+				var neighboringHeights = GetNeighboringHeights(x, z);
 				var minHeight = height - 1;  // One less than the coordinate of the lowest ground block at this x and z coord..
 				var maxHeight = height + 1;  // Y coordinate of the highest air block with this x and z coord..
-				foreach (var h in GetNeighboringHeights(x, z))
+				foreach (var h in neighboringHeights)
 				{
 					minHeight = System.Math.Min(minHeight, h);
 					maxHeight = System.Math.Max(maxHeight, h);
@@ -162,7 +163,33 @@ namespace VoxelGame.Terrain
 					MinHeight = height;
 				}
 
-				// Create the blocks
+
+				// Create the Air Blocks.
+				for (var y = maxHeight; y > height; --y)
+				{
+					var pos = new Vector3Int(x, y, z);
+					var voxel = new Voxel(VoxelData.VoxelType.AIR, biome);
+
+					// Using the assumption that the map is always a heightmap, we can simplify the mesh
+					// generation process by a lot. We know that each air block has a connection in any
+					// direction if that neighboring height is equal to it's height. And only the bottom
+					// air block has a connection downwards.
+					foreach (var h in neighboringHeights)
+					{ 
+						if (y == h)
+						{
+							++voxel.NumOfExposedFaces;
+						}
+					}
+					if (y == height + 1)
+					{
+						++voxel.NumOfExposedFaces;
+					}
+
+					_voxels.Add(pos, voxel);
+				}
+
+				// Create the ground blocks.
 				for (var y = height; y > minHeight; --y)
 				{
 					if (_heightDensities.ContainsKey(y))
@@ -176,7 +203,7 @@ namespace VoxelGame.Terrain
 
 					var pos = new Vector3Int(x, y, z);
 
-					int voxelType = 0;  // TODO: Set the voxel type.
+					var voxelType = VoxelData.VoxelType.DIRT;  // TODO: Set the voxel type.
 
 					var voxel = new Voxel(voxelType, biome);
 
@@ -220,7 +247,7 @@ namespace VoxelGame.Terrain
 
 			Debug.Log("Creating a new voxel!");
 
-			var voxel = new Voxel(dataId, 0);  // TODO: Add biome ID obtained from x, z coordinate.
+			var voxel = new Voxel(VoxelData.VoxelType.DIRT, 0);  // TODO: Add biome ID obtained from x, z coordinate.
 			_voxels.Add(localPos, voxel);
 
 			//CreateOrDestroyBlock(localPos, voxel, shouldCreate: true);

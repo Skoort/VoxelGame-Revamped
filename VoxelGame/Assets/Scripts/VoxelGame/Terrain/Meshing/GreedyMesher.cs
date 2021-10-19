@@ -90,42 +90,41 @@ namespace VoxelGame.Terrain.Meshing
 			var faceIndex = axis + dir * 3;
 
 			for (int y = _lowerBounds[sliceDimensions.y]; y < _upperBounds[sliceDimensions.y]; ++y)
+			//for (int y = _upperBounds[sliceDimensions.y] - 1; y >= _lowerBounds[sliceDimensions.y]; --y)
 			for (int x = _lowerBounds[sliceDimensions.x]; x < _upperBounds[sliceDimensions.x]; ++x)
 			{
 				var sliceSpacePos = new Vector3Int(x, y, offset);
 				var localPosition = TransformSpace(axis, sliceSpacePos);
 
 				var voxel = Chunk.GetVoxel(localPosition);
-				if (voxel != null)
+				if (voxel != null && voxel.DataId != VoxelData.VoxelType.AIR)
 				{
 					//Debug.Log("Found a voxel to make faces for!");
 					
-					// A face should only be drawn if the voxel in front/behind (relative) this one doesn't exist.
+					// A face should only be drawn if the voxel in front/behind (relative) this one is AIR.
 					var voxelBehind = Chunk.GetVoxel(TransformSpace(axis, sliceSpacePos + new Vector3Int(0, 0, dir == 0 ? +1 : -1)));
-					if (voxelBehind == null)  // Should really be a test if voxelBehind is at least partially transparent.
+					if (voxelBehind?.DataId == VoxelData.VoxelType.AIR)  // Should really be a test if voxelBehind is at least partially transparent.
 					{
 						//Debug.Log("voxel is visible!");
 
-						var topNeighbor = Chunk.GetVoxel(TransformSpace(axis, sliceSpacePos - Vector3Int.up));
-						var lftNeighbor = Chunk.GetVoxel(TransformSpace(axis, sliceSpacePos + Vector3Int.left));
+						var botNeighbor = Chunk.GetVoxel(TransformSpace(axis, sliceSpacePos - Vector3Int.up));
+						var lftNeighbor = Chunk.GetVoxel(TransformSpace(axis, sliceSpacePos - Vector3Int.right));
 
-
-
-						var topMesh = (topNeighbor != null && topNeighbor.FaceIndices[faceIndex] != -1)
-							? _greedyMeshData[topNeighbor.FaceIndices[faceIndex]]
+						var botMesh = (botNeighbor != null && botNeighbor.FaceIndices[faceIndex] != -1)
+							? _greedyMeshData[botNeighbor.FaceIndices[faceIndex]]
 							: null;
 						var lftMesh = (lftNeighbor != null && lftNeighbor.FaceIndices[faceIndex] != -1)
 							? _greedyMeshData[lftNeighbor.FaceIndices[faceIndex]]
 							: null;
 
 						MeshFace usedMesh = null;
-						if (topMesh != null && topMesh.Scale.x == 1)
+						if (botMesh != null && botMesh.Scale.x == 1)
 						{
 							// Growing a rect wider than 1 unit is handled by creating another rect and merging the two.
 							//Debug.Log("The top (relative) voxel's rect is only 1 unit wide. Extending it downwards by 1!");
 
-							++topMesh.Scale.y;
-							usedMesh = topMesh;
+							++botMesh.Scale.y;
+							usedMesh = botMesh;
 						}
 
 						if (usedMesh == null && lftMesh != null && lftMesh.Scale.y == 1)
@@ -138,22 +137,22 @@ namespace VoxelGame.Terrain.Meshing
 
 							++lftMesh.Scale.x;
 
-							if (topMesh != null
-							&& lftMesh.SliceSpacePosition.x == topMesh.SliceSpacePosition.x
-							&& lftMesh.Scale.x == topMesh.Scale.x)
+							if (botMesh != null
+							&& lftMesh.SliceSpacePosition.x == botMesh.SliceSpacePosition.x
+							&& lftMesh.Scale.x == botMesh.Scale.x)
 							{
 								//Debug.Log("Extending the left voxel's rect caused it to be merged with the top voxel's rect!");
-								++topMesh.Scale.y;
+								++botMesh.Scale.y;
 
 								//Debug.Log("Recycling the left voxel's rect!");
 								RecycleMeshFace(lftMesh);
 								for (int i = 1; i < lftMesh.Scale.x; ++i)
 								{
 									var voxelToFix = Chunk.GetVoxel(TransformSpace(axis, new Vector3Int(x - i, y, offset)));  // Can probably avoid a call to TransformSpace here.
-									voxelToFix.FaceIndices[faceIndex] = topMesh.MeshIndex;  // voxelToFix can't be null.
+									voxelToFix.FaceIndices[faceIndex] = botMesh.MeshIndex;  // voxelToFix can't be null.
 								}
 
-								usedMesh = topMesh;
+								usedMesh = botMesh;
 							}
 							else
 							{

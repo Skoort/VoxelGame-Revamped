@@ -67,5 +67,13 @@ namespace VoxelGame.Terrain
 			// -Z
 			new Vector3[4] { new Vector3( 0,  0, -1), new Vector3( 0,  0, -1), new Vector3( 0,  0, -1), new Vector3( 0,  0, -1), },
 		};
+
+		public enum VoxelType
+		{ 
+			AIR = 0,
+			DIRT,
+			STONE,
+			GRASS
+		}
 	}
 }

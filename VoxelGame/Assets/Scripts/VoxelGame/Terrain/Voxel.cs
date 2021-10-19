@@ -2,13 +2,13 @@ namespace VoxelGame.Terrain
 {
 	public class Voxel
 	{
-		public Voxel(int dataId, int biomeId)
+		public Voxel(VoxelData.VoxelType dataId, int biomeId)
 		{
 			DataId = dataId;
 			BiomeId = biomeId;
 		}
 
-		public int DataId { get; set; }  // Can change voxel type. 0 - Air, 1 - Dirt
+		public VoxelData.VoxelType DataId { get; set; }
 		public int BiomeId { get; private set; }  // Cannot change biome.
 
 		public int[] FaceIndices { get; } = new int[6] { -1, -1, -1, -1, -1, -1 };
