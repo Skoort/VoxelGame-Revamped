@@ -56,8 +56,8 @@ namespace VoxelGame.Terrain
 
 			Status = LoadStatus.LOADING;
 
-			//await Task.Run(() =>
-			//{
+			await Task.Run(() =>
+			{
 				if (shouldLoadFromFile)
 				{
 					LoadMapsAndMesh();
@@ -71,7 +71,7 @@ namespace VoxelGame.Terrain
 					_mesher = new GreedyMesher(this);
 					_mesher.GenerateMesh();
 				}
-			//}, destroyRequestedToken);
+			}, destroyRequestedToken);
 
 			Status = LoadStatus.FINISHED_LOADING;
 
@@ -107,6 +107,19 @@ namespace VoxelGame.Terrain
 			{
 				_heightmap[x, z] = ChunkManager.Instance.BiomeLogic.GetHeight(new Vector3(x - 1, 0, z - 1) + Position);
 			}
+		}
+
+		public Dictionary<Vector3Int, Voxel> GetNeighboringBlocks(Vector3Int pos)
+		{
+			return new Dictionary<Vector3Int, Voxel>()
+			{
+				{ new Vector3Int(-1,  0,  0), GetVoxel(pos + new Vector3Int(-1,  0,  0)) },  // left
+				{ new Vector3Int(+1,  0,  0), GetVoxel(pos + new Vector3Int(+1,  0,  0)) },  // right
+				{ new Vector3Int( 0,  0, -1), GetVoxel(pos + new Vector3Int( 0,  0, -1)) },  // back
+				{ new Vector3Int( 0,  0, +1), GetVoxel(pos + new Vector3Int( 0,  0, +1)) },  // forward
+				{ new Vector3Int( 0, -1,  0), GetVoxel(pos + new Vector3Int( 0, -1,  0)) },  // down
+				{ new Vector3Int( 0, +1,  0), GetVoxel(pos + new Vector3Int( 0, +1,  0)) },  // up
+			};
 		}
 
 		private IEnumerable<int> GetNeighboringHeights(int x, int z)
