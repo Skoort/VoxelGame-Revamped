@@ -21,6 +21,9 @@ namespace VoxelGame.Terrain.Meshing
 		private List<Vector3> _normals;
 		private List<Vector2> _uvs;
 
+		private int _dirtyCount;
+		private int _maxDirtyCountBeforeRegenerate = 30;
+
 		public GreedyMesher(Chunk chunk)
 		{
 			this.Chunk = chunk;
@@ -45,21 +48,21 @@ namespace VoxelGame.Terrain.Meshing
 			// The heights are not fixed. We must get the bounds each time we generate the mesh.
 			Size = new Vector3Int(
 				ChunkManager.Instance.ChunkSize.x,
-				Chunk.MaxHeight,
+				Chunk.MaxHeight - Chunk.MinHeight + 1,
 				ChunkManager.Instance.ChunkSize.y);
 			_minHeight = Chunk.MinHeight;
 
 			// The iteration order here and TransformSpace must ensure that the algorithms assumptions
 			// about iterating on the slice space (left to right, then bottom to top) are met.
 			for (int z = 0; z < Size.z; ++z)
-				for (int y = 0; y < Size.y; ++y)
-					for (int x = 0; x < Size.x; ++x)
-					{
-						var position = new Vector3Int(x, y + _minHeight, z);
-						CreateFacesAtPosition(position);
-					}
+			for (int y = 0; y < Size.y; ++y)
+			for (int x = 0; x < Size.x; ++x)
+			{
+				var position = new Vector3Int(x, y + _minHeight, z);
+				CreateFacesAtPosition(position);
+			}
 
-			PositionMeshSlices();
+			PositionQuads(_greedyMeshData);
 		}
 
 		private void CreateFacesAtPosition(Vector3Int position)
@@ -84,14 +87,14 @@ namespace VoxelGame.Terrain.Meshing
 			var axis = faceIndex % 3;
 			var dir = faceIndex < 3 ? 0 : 1;
 
-			var sliceSpacePos = TransformToSliceSpace(axis, position);
+			var sliceSpacePos = position.ChunkLocalToChunkSlice(axis);
 
 			// A face should only be drawn if the voxel in front/behind (relative) this one is AIR.
-			var voxelBehind = Chunk.GetVoxel(TransformToLocalSpace(axis, sliceSpacePos + new Vector3Int(0, 0, dir == 0 ? +1 : -1)));
+			var voxelBehind = Chunk.GetVoxel((sliceSpacePos + new Vector3Int(0, 0, dir == 0 ? +1 : -1)).ChunkSliceToChunkLocal(axis));
 			if (voxelBehind?.DataId == VoxelData.VoxelType.AIR)
 			{
-				var botNeighbor = Chunk.GetVoxel(TransformToLocalSpace(axis, sliceSpacePos - Vector3Int.up));
-				var lftNeighbor = Chunk.GetVoxel(TransformToLocalSpace(axis, sliceSpacePos - Vector3Int.right));
+				var botNeighbor = Chunk.GetVoxel((sliceSpacePos - Vector3Int.up).ChunkSliceToChunkLocal(axis));
+				var lftNeighbor = Chunk.GetVoxel((sliceSpacePos - Vector3Int.right).ChunkSliceToChunkLocal(axis));
 
 				var botMesh = (botNeighbor != null && botNeighbor.FaceIndices[faceIndex] != -1)
 					? _greedyMeshData[botNeighbor.FaceIndices[faceIndex]]
@@ -130,7 +133,7 @@ namespace VoxelGame.Terrain.Meshing
 						RecycleMeshFace(lftMesh);
 						for (int i = 1; i < lftMesh.Scale.x; ++i)
 						{
-							var voxelToFix = Chunk.GetVoxel(TransformToLocalSpace(axis, sliceSpacePos - new Vector3Int(i, 0, 0)));  // Can probably avoid a call to TransformSpace here.
+							var voxelToFix = Chunk.GetVoxel((sliceSpacePos - new Vector3Int(i, 0, 0)).ChunkSliceToChunkLocal(axis));  // Can probably avoid a call to TransformSpace here.
 							voxelToFix.FaceIndices[faceIndex] = botMesh.MeshIndex;
 						}
 
@@ -145,53 +148,15 @@ namespace VoxelGame.Terrain.Meshing
 				if (usedMesh == null)
 				{
 					// Create a brand new rect for this voxel.
-					usedMesh = CreateMeshFace(sliceSpacePos, axis, dir);
+					usedMesh = CreateMeshFace(sliceSpacePos, faceIndex);
 				}
 
 				voxel.AddFace(faceIndex, usedMesh.MeshIndex);
 			}
 		}
 
-		//    axis  |  sliceX  |  sliceY
-		// ---------+----------+----------
-		//    X (0) |    Y     |    Z 
-		//    Y (1) |    X     |    Z   
-		//    Z (2) |    X     |    Y   
-		// Transforms from local space to slice space.
-		Vector3Int TransformToSliceSpace(int axis, Vector3Int pos)
+		public MeshFace CreateMeshFace(Vector3Int sliceSpacePos, int voxelFaceIndex)
 		{
-			int x = axis != 0 ? pos.x : pos.y;
-			int y = axis != 2 ? pos.z : pos.y;
-			int z = axis == 0
-				? pos.x
-				: axis == 1
-					? pos.y
-					: pos.z;
-			return new Vector3Int(x, y, z);
-		}
-
-		//    axis  |  localX  |  localY  |  localZ
-		// ---------+----------+----------+----------
-		//    X (0) |     Z    |     X    |     Y
-		//    Y (1) |     X    |     Z    |     Y
-		//    Z (2) |     X    |     Y    |     Z
-		// Transforms from slice space to local space.
-		Vector3Int TransformToLocalSpace(int axis, Vector3Int pos)
-		{
-			int x = axis != 0 ? pos.x : pos.z;
-			int z = axis != 2 ? pos.y : pos.z;
-			int y = axis == 0
-				? pos.x
-				: axis == 1
-					? pos.z
-					: pos.y;
-			return new Vector3Int(x, y, z);
-		}
-
-		private MeshFace CreateMeshFace(Vector3Int sliceSpacePos, int sliceDimension, int plusOrMinus)
-		{
-			var voxelFaceIndex = sliceDimension + plusOrMinus * 3;
-
 			MeshFace meshData = null;
 			if (_unusedMeshData.Count > 0)
 			{
@@ -215,8 +180,9 @@ namespace VoxelGame.Terrain.Meshing
 				_faces.AddRange(Enumerable.Range(0, 4).Select(i => i + meshData.MeshIndex * 4));
 			}
 			meshData.Scale = Vector3Int.one;
-			meshData.SliceDimension = sliceDimension;
+			meshData.SliceDimension = voxelFaceIndex % 3;
 			meshData.SliceSpacePosition = sliceSpacePos;
+			meshData.FaceId = voxelFaceIndex;
 
 			return meshData;
 		}
@@ -232,19 +198,24 @@ namespace VoxelGame.Terrain.Meshing
 			_unusedMeshData.Enqueue(face);
 		}
 
-		private void PositionMeshSlices()
+		private void PositionQuads(IEnumerable<MeshFace> quads)
 		{
-			foreach (var rect in _greedyMeshData)
+			foreach (var quad in quads)
 			{
-				var absPosition = TransformToLocalSpace(rect.SliceDimension, rect.SliceSpacePosition);
-				var localSliceScales = TransformToLocalSpace(rect.SliceDimension, rect.Scale);
+				PositionQuad(quad);
+			}
+		}
 
-				for (int i = 0; i < 4; ++i)
-				{
-					var vertexIndex = rect.MeshIndex * 4 + i;
+		public void PositionQuad(MeshFace quad)
+		{
+			var absPosition = quad.SliceSpacePosition.ChunkSliceToChunkLocal(quad.SliceDimension);
+			var localSliceScales = quad.Scale.ChunkSliceToChunkLocal(quad.SliceDimension);
 
-					_vertices[vertexIndex] = Vector3Int.FloorToInt(_vertices[vertexIndex]) * localSliceScales + absPosition;
-				}
+			for (int i = 0; i < 4; ++i)
+			{
+				var vertexIndex = quad.MeshIndex * 4 + i;
+
+				_vertices[vertexIndex] = Vector3Int.FloorToInt(_vertices[vertexIndex]) * localSliceScales + absPosition;
 			}
 		}
 
@@ -257,6 +228,120 @@ namespace VoxelGame.Terrain.Meshing
 			Mesh.SetIndices(_faces, MeshTopology.Quads, 0);
 
 			meshFilter.mesh = Mesh;
+		}
+
+		public void BreakUpRect(Voxel voxelToRemove, int faceIdToRemove)
+		{
+			var oldRect = _greedyMeshData[voxelToRemove.FaceIndices[faceIdToRemove]];
+
+			var positionToRemoveSliceSpace = voxelToRemove.Position.ChunkLocalToChunkSlice(oldRect.SliceDimension);
+
+			// Reassign the remaining voxels to new rectangles.
+			CreateCornerRects(positionToRemoveSliceSpace, oldRect,
+				out var topRect, 
+				out var bottomRect, 
+				out var rightRect, 
+				out var leftRect);
+
+			AssignCornerRects(positionToRemoveSliceSpace, 
+				oldRect, 
+				topRect, 
+				bottomRect, 
+				rightRect, 
+				leftRect);
+
+			// Destroy the old rectangle and remove this voxel's face index. Do this last so it isn't
+			// recycled while it is still needed.
+			RecycleMeshFace(oldRect);
+			voxelToRemove.RemFace(faceIdToRemove);
+		}
+
+		private void CreateCornerRects(Vector3Int positionToRemoveSliceSpace, MeshFace oldRect, 
+			out MeshFace topRect, 
+			out MeshFace bottomRect, 
+			out MeshFace rightRect, 
+			out MeshFace leftRect)
+		{
+			topRect = null;
+			leftRect = null;
+			rightRect = null;
+			bottomRect = null;
+			if (positionToRemoveSliceSpace.y < oldRect.SliceSpacePosition.y + oldRect.Scale.y - 1)
+			{
+				var bottomLeftCorner = new Vector3Int(oldRect.SliceSpacePosition.x, positionToRemoveSliceSpace.y + 1, oldRect.SliceSpacePosition.z);
+				topRect = CreateMeshFace(bottomLeftCorner, oldRect.FaceId);
+				topRect.Scale = new Vector3Int(
+					oldRect.Scale.x,
+					oldRect.Scale.y - (positionToRemoveSliceSpace.y - oldRect.SliceSpacePosition.y + 1),
+					1);
+				PositionQuad(topRect);
+			}
+			if (positionToRemoveSliceSpace.y > oldRect.SliceSpacePosition.y)
+			{
+				var bottomLeftCorner = new Vector3Int(positionToRemoveSliceSpace.x, oldRect.SliceSpacePosition.y, oldRect.SliceSpacePosition.z);
+				bottomRect = CreateMeshFace(bottomLeftCorner, oldRect.FaceId);
+				bottomRect.Scale = new Vector3Int(
+					1,
+					positionToRemoveSliceSpace.y - oldRect.SliceSpacePosition.y,
+					1);
+				PositionQuad(bottomRect);
+			}
+			if (positionToRemoveSliceSpace.x < oldRect.SliceSpacePosition.x + oldRect.Scale.x - 1)
+			{
+				var bottomLeftCorner = new Vector3Int(positionToRemoveSliceSpace.x + 1, oldRect.SliceSpacePosition.y, oldRect.SliceSpacePosition.z);
+				rightRect = CreateMeshFace(bottomLeftCorner, oldRect.FaceId);
+				rightRect.Scale = new Vector3Int(
+					oldRect.Scale.x - (positionToRemoveSliceSpace.x - oldRect.SliceSpacePosition.x + 1),
+					positionToRemoveSliceSpace.y - oldRect.SliceSpacePosition.y + 1,
+					1);
+				PositionQuad(rightRect);
+			}
+			if (positionToRemoveSliceSpace.x > oldRect.SliceSpacePosition.x)
+			{
+				var bottomLeftCorner = oldRect.SliceSpacePosition;
+				leftRect = CreateMeshFace(bottomLeftCorner, oldRect.FaceId);
+				leftRect.Scale = new Vector3Int(
+					positionToRemoveSliceSpace.x - oldRect.SliceSpacePosition.x,
+					positionToRemoveSliceSpace.y - oldRect.SliceSpacePosition.y + 1,
+					1);
+				PositionQuad(leftRect);
+			}
+		}
+
+		private void AssignCornerRects(Vector3Int centralSliceSpacePosition,
+			MeshFace oldRect, 
+			MeshFace topRect, 
+			MeshFace bottomRect, 
+			MeshFace rightRect, 
+			MeshFace leftRect)
+		{
+			for (int y = 0; y < oldRect.Scale.y; ++y)
+			for (int x = 0; x < oldRect.Scale.x; ++x)
+			{
+				var sliceSpacePosition = oldRect.SliceSpacePosition + new Vector3Int(x, y, 0);
+
+				var voxel = Chunk.GetVoxel(sliceSpacePosition.ChunkSliceToChunkLocal(oldRect.SliceDimension));
+
+				var quadIndex = voxel.FaceIndices[oldRect.FaceId];
+
+				// Top has priority over left and right, and left and right have priority over bottom.
+				if (sliceSpacePosition.y > centralSliceSpacePosition.y)
+				{
+					voxel.FaceIndices[oldRect.FaceId] = topRect.MeshIndex;
+				} else
+				if (sliceSpacePosition.x > centralSliceSpacePosition.x)
+				{
+					voxel.FaceIndices[oldRect.FaceId] = rightRect.MeshIndex;
+				} else
+				if (sliceSpacePosition.x < centralSliceSpacePosition.x)
+				{
+					voxel.FaceIndices[oldRect.FaceId] = leftRect.MeshIndex;
+				} else
+				if (sliceSpacePosition.y < centralSliceSpacePosition.y)
+				{
+					voxel.FaceIndices[oldRect.FaceId] = bottomRect.MeshIndex;
+				}
+			}
 		}
 	}
 }
