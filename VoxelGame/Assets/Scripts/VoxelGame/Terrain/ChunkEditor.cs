@@ -11,12 +11,12 @@ namespace VoxelGame.Terrain
 		{
 			// Consider moving the index changing out of BreakUpRect so it is more explicit what is happening here.
 
-			thisChunk.ShouldRedraw = requestRedraws;
-			thisChunk.ShouldCalculateCollisions = requestCollisions;
+			var affectedChunks = new HashSet<Chunk>();
+			affectedChunks.Add(thisChunk);
 
 			var thisPosition = thisPositionGlobal.WorldToChunkLocal(thisChunk);
 
-			bool isAirToSolid = thisVoxel.DataId != VoxelData.VoxelType.AIR;
+			var isAirToSolid = thisVoxel.DataId != VoxelData.VoxelType.AIR;  // Requires you to set the voxel's type to the new type before calling this method.
 
 			int thisFaceId = 0;
 			foreach (var neighborPositionGlobal in GetNeighboringPositions(thisPositionGlobal))
@@ -53,11 +53,14 @@ namespace VoxelGame.Terrain
 						neighborsChunk.Mesher.BreakUpRect(neighborsVoxel, neighborsFaceId);
 						if (neighborsVoxel.NumOfExposedFaces <= 0)
 						{
+							// TODO: Make it that it forgets the voxel if it's the same as it's predicted biome block
+							// type. Otherwise save it. When generating an unearthed block's block type, check to see 
+							// if the voxel exists but is just not exposed. Reveal it, otherwise create it from biome.
+							neighborsChunk.RemoveHeight(neighborsVoxel.Position.y);
 							neighborsChunk.RemoveVoxel(neighborsPosition);  // The neighboring voxel is safe to remove here, because the only change for the neighbor is this voxel.
 						}
 
-						neighborsChunk.ShouldRedraw = requestRedraws;
-						neighborsChunk.ShouldCalculateCollisions = requestCollisions;
+						affectedChunks.Add(neighborsChunk);
 					}
 				}
 				else
@@ -65,6 +68,7 @@ namespace VoxelGame.Terrain
 					if (neighborsVoxel == null)
 					{
 						neighborsVoxel = neighborsChunk.AddVoxelStub(neighborsPosition, VoxelData.VoxelType.DIRT, -1);  // TODO: Add block type and biome selection.
+						neighborsChunk.AddHeight(neighborsVoxel.Position.y);
 					}
 
 					if (neighborsVoxel.DataId != VoxelData.VoxelType.AIR)
@@ -76,8 +80,7 @@ namespace VoxelGame.Terrain
 						neighborsVoxel.AddFace(neighborsFaceId, face.MeshIndex);
 						neighborsChunk.Mesher.PositionQuad(face);
 
-						neighborsChunk.ShouldRedraw = requestRedraws;
-						neighborsChunk.ShouldCalculateCollisions = requestCollisions;
+						affectedChunks.Add(neighborsChunk);
 					}
 					else
 					{
@@ -89,10 +92,31 @@ namespace VoxelGame.Terrain
 				++thisFaceId;
 			}
 
-			// We have to wait until every single neighboring voxel is calculated, otherwise we may delete prematurely.
+			if (isAirToSolid && thisVoxel.NumOfExposedFaces > 0)
+			{
+				// We created a new solid block. As long as this solid block is still visible (we have to make
+				// sure we didn't seal up a room from the inside, removing the block), we need to increment the 
+				// height.
+				thisChunk.AddHeight(thisPosition.y);
+			} else
+			if (!isAirToSolid)
+			{
+				// We turned a solid block into an air block, decrement the height.
+				thisChunk.RemoveHeight(thisPosition.y);
+			}
+
+			// Check to see if this voxel can be removed. We have to wait until every single neighboring voxel
+			// updates this voxel's number of exposed faces, otherwise we may delete it prematurely.
 			if (thisVoxel.NumOfExposedFaces <= 0)
 			{
-				thisChunk.RemoveVoxel(thisPosition);  // Remove the voxel. Because the number of exposed faces is 0, we don't need to update its neighbors.
+				thisChunk.RemoveVoxel(thisPosition);
+			}
+
+			foreach (var chunk in affectedChunks)
+			{
+				chunk.ShouldRedraw = requestRedraws;
+				chunk.ShouldCalculateCollisions = requestCollisions;
+				chunk.Mesher.MarkDirty();
 			}
 		}
 

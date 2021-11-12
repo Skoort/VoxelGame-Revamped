@@ -23,11 +23,87 @@ namespace VoxelGame.Terrain
 
 		private Dictionary<Vector3Int, Voxel> _voxels;
 
-		//private List<int> _heightDensities;  // A list of length (MaxHeight - MinHeight + 1), where each element represents the amount of visible blocks at that height.
+		// The height densities of solid blocks.
 		private Dictionary<int, int> _heightDensities;
 		private int[,] _heightmap;
 		public int MinHeight { get; private set; } = int.MaxValue;
 		public int MaxHeight { get; private set; } = int.MinValue;
+
+		public void AddHeight(int height)
+		{
+			// Valid values for height should be between MinHeight - 1 and MaxHeight + 1. Though it 
+			// may be possible that removing a block causes RemoveHeight to be called, incrementing 
+			// the MinHeight, and then a new block is generated underneath, calling AddHeight with 
+			// a value of MinHeight - 2.
+
+			// Cover the case that you created a block below the min height. This block is the new min height.
+			for (int i = MinHeight; i >= height; --i)
+			{
+				if (!_heightDensities.ContainsKey(i))
+				{
+					_heightDensities[i] = 0;
+				}
+			}
+
+			// Cover the case that you created a block above the max height. This block is the new max height.
+			for (int i = MaxHeight; i <= height; ++i)
+			{
+				if (!_heightDensities.ContainsKey(i))
+				{
+					_heightDensities[i] = 0;
+				}
+			}
+
+			if (height < MinHeight)
+			{
+				MinHeight = height;
+			} else
+			if (height > MaxHeight)
+			{
+				MaxHeight = height;
+			}
+
+			++_heightDensities[height];
+		}
+
+		public void RemoveHeight(int height)
+		{
+			// Valid values for height are between MinHeight and MaxHeight.
+
+			--_heightDensities[height];
+			if (height == MinHeight)
+			{
+				// Set MinHeight to the first nonzero height, removing any zero heights along the way.
+				for (int i = height; i <= MaxHeight; ++i)
+				{
+					if (_heightDensities[height] <= 0)
+					{
+						_heightDensities.Remove(height);
+					}
+					else
+					{  // This is guaranteed to happen because _heightDensities[MaxHeight] > 0.
+						MinHeight = i;
+						break;
+					}
+				}
+			}
+			if (height == MaxHeight)
+			{
+				// Set MaxHeight to the first nonzero height, removing any zero heights along the way.
+				for (int i = height; i >= MinHeight; --i)
+				{
+					if (_heightDensities[height] <= 0)
+					{
+						_heightDensities.Remove(height);
+					}
+					else
+					{  // This is guaranteed to happen because _heightDensities[MinHeight] > 0.
+						MaxHeight = i;
+						break;
+					}
+				}
+			}
+		}
 
 		public bool HasBeenModified { get; private set; }
 		
@@ -50,6 +126,11 @@ namespace VoxelGame.Terrain
 
 		private void Update()
 		{
+			if (Status != LoadStatus.FINISHED_LOADING)
+			{
+				return;
+			}
+
 			if (ShouldRedraw)
 			{
 				Mesher.ShowMesh(_meshFilter);
@@ -60,6 +141,13 @@ namespace VoxelGame.Terrain
 			{
 				CalculateCollisions();
 				ShouldCalculateCollisions = false;
+			}
+
+			if (Mesher.DirtyCount > Mesher.MaxDirtyCountBeforeRegenerate)
+			{
+				Mesher.GenerateMesh();
+				ShouldRedraw = true;
+				ShouldCalculateCollisions = true;
 			}
 		}
 

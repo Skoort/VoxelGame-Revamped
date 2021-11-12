@@ -21,8 +21,13 @@ namespace VoxelGame.Terrain.Meshing
 		private List<Vector3> _normals;
 		private List<Vector2> _uvs;
 
-		private int _dirtyCount;
-		private int _maxDirtyCountBeforeRegenerate = 30;
+		public void MarkDirty()
+		{
+			++DirtyCount;
+		}
+
+		public int DirtyCount { get; private set; }
+		public int MaxDirtyCountBeforeRegenerate { get; } = 15;
 
 		public GreedyMesher(Chunk chunk)
 		{
@@ -39,6 +44,7 @@ namespace VoxelGame.Terrain.Meshing
 			_vertices = new List<Vector3>();
 			_normals = new List<Vector3>();
 			_uvs = new List<Vector2>();
+			DirtyCount = 0;
 		}
 
 		public void GenerateMesh()
@@ -321,8 +327,6 @@ namespace VoxelGame.Terrain.Meshing
 				var sliceSpacePosition = oldRect.SliceSpacePosition + new Vector3Int(x, y, 0);
 
 				var voxel = Chunk.GetVoxel(sliceSpacePosition.ChunkSliceToChunkLocal(oldRect.SliceDimension));
-
-				var quadIndex = voxel.FaceIndices[oldRect.FaceId];
 
 				// Top has priority over left and right, and left and right have priority over bottom.
 				if (sliceSpacePosition.y > centralSliceSpacePosition.y)
