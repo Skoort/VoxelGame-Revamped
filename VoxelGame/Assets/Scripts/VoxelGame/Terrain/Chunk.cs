@@ -162,6 +162,8 @@ namespace VoxelGame.Terrain
 
 			await Task.Run(() =>
 			{
+				//if (Position != Vector3Int.zero) return;  // TODO: Remove!
+
 				if (shouldLoadFromFile)
 				{
 					LoadMapsAndMesh();
@@ -281,9 +283,8 @@ namespace VoxelGame.Terrain
 					}
 
 					var pos = new Vector3Int(x, y, z);
-
-					var voxelType = VoxelData.VoxelType.DIRT;  // TODO: Set the voxel type.
-
+					var worldPos = Position + pos;
+					var voxelType = ChunkManager.Instance.BiomeLogic.GetVoxelType(worldPos, GetHeightmapValue(pos.x, pos.z));
 					var voxel = new Voxel(pos, voxelType, biome);
 
 					_voxels.Add(pos, voxel);
@@ -291,7 +292,7 @@ namespace VoxelGame.Terrain
 			}
 		}
 
-		private IEnumerable<int> GetNeighboringHeights(int x, int z)
+		public IEnumerable<int> GetNeighboringHeights(int x, int z)
 		{
 			// The heightmap includes the outer layer of voxels.
 			x = x + 1;
@@ -314,9 +315,23 @@ namespace VoxelGame.Terrain
 				yield return _heightmap[x, z - 1];
 			}
 		}
-		
+
+		public int GetHeightmapValue(int x, int y)
+		{
+			// The heightmap includes the outer layer of voxels.
+			x = x + 1;
+			y = y + 1;
+
+			return _heightmap[x, y];
+		}
+
 		private void OnDrawGizmosSelected()
 		{
+			if (Status != LoadStatus.FINISHED_LOADING)
+			{
+				return;
+			}
+
 			Gizmos.color = Color.blue;
 			Gizmos.DrawWireMesh(Mesher.Mesh, 0, Position);
 		}

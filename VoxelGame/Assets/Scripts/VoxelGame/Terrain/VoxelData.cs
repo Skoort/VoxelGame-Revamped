@@ -1,3 +1,5 @@
+using System;
+using System.Linq;
 using UnityEngine;
 
 namespace VoxelGame.Terrain
@@ -36,22 +38,38 @@ namespace VoxelGame.Terrain
 			new Vector3[4] { new Vector3(0,0,0), new Vector3(0,1,0), new Vector3(1,1,0), new Vector3(1,0,0) },
 		};
 
-		public static Vector2[][] UVs2 { get; } = new Vector2[6][]
+		public static Vector3[][] UVs3 { get; } = new Vector3[6][]
 		{
 			// +X
-			new Vector2[4] { new Vector2(0, 0), new Vector2(0, 1), new Vector2(1, 1), new Vector2(1, 0), },
+			new Vector3[4] { new Vector3(0, 0), new Vector3(0, 1), new Vector3(1, 1), new Vector3(1, 0), },
 			// +Y
-			new Vector2[4] { new Vector2(0, 1), new Vector2(0, 0), new Vector2(1, 0), new Vector2(1, 1), },
+			new Vector3[4] { new Vector3(0, 1), new Vector3(0, 0), new Vector3(1, 0), new Vector3(1, 1), },
 			// +Z
-			new Vector2[4] { new Vector2(1, 0), new Vector2(0, 0), new Vector2(0, 1), new Vector2(1, 1), },
+			new Vector3[4] { new Vector3(1, 0), new Vector3(0, 0), new Vector3(0, 1), new Vector3(1, 1), },
 			// -X
-			new Vector2[4] { new Vector2(1, 0), new Vector2(0, 0), new Vector2(0, 1), new Vector2(1, 1), },
+			new Vector3[4] { new Vector3(1, 0), new Vector3(0, 0), new Vector3(0, 1), new Vector3(1, 1), },
 			// -Y
-			new Vector2[4] { new Vector2(0, 0), new Vector2(1, 0), new Vector2(1, 1), new Vector2(0, 1), },
+			new Vector3[4] { new Vector3(0, 0), new Vector3(1, 0), new Vector3(1, 1), new Vector3(0, 1), },
 			// -Z
-			new Vector2[4] { new Vector2(0, 0), new Vector2(0, 1), new Vector2(1, 1), new Vector2(1, 0), },
+			new Vector3[4] { new Vector3(0, 0), new Vector3(0, 1), new Vector3(1, 1), new Vector3(1, 0), },
 		};
-		
+
+		private static int[] TextureFaceOffsets { get; } = new int[6]
+		{
+			0,
+			1,
+			0,
+			0,
+			2,
+			0
+		};
+
+		public static Vector3[] GetScaledAndOffsetUVs3(int faceId, int textureNo)
+		{
+			var offset = textureNo * 3 + TextureFaceOffsets[faceId];
+			return UVs3[faceId].Select(x => x + new Vector3(0, 0, offset)).ToArray();
+		}
+
 		public static Vector3[][] Normals { get; } = new Vector3[6][]
 		{
 			// +X
@@ -72,8 +90,8 @@ namespace VoxelGame.Terrain
 		{ 
 			AIR = 0,
 			DIRT,
-			STONE,
-			GRASS
+			GRASS,
+			STONE
 		}
 	}
 }

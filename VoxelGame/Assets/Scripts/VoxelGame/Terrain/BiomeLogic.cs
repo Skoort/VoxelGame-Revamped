@@ -93,6 +93,25 @@ namespace VoxelGame.Terrain
 			return mountainsHeight;
 		}
 
+		public VoxelData.VoxelType GetVoxelType(Vector3Int voxelWorldPosition, int heightAtThisPosition)
+		{
+			var transformedPos = Vector3.Scale(voxelWorldPosition + _offset2, new Vector3(+0.0316F, -0.0356F));
+			var dirtyDepth = Mathf.FloorToInt(Mathf.PerlinNoise(transformedPos.x, transformedPos.z) * 5) + 1;
+
+			if (heightAtThisPosition == voxelWorldPosition.y)
+			{
+				return VoxelData.VoxelType.GRASS;
+			} else
+			if (heightAtThisPosition - voxelWorldPosition.y < dirtyDepth)
+			{
+				return VoxelData.VoxelType.DIRT;
+			}
+			else
+			{
+				return VoxelData.VoxelType.STONE;
+			}
+		}
+
 		public int GetHeight(Vector3 voxelWorldPosition)
 		{
 			//if (voxelWorldPosition == new Vector3(0, 0, 0))

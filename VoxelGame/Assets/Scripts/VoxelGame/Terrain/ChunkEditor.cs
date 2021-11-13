@@ -16,13 +16,13 @@ namespace VoxelGame.Terrain
 
 			var thisPosition = thisPositionGlobal.WorldToChunkLocal(thisChunk);
 
-			var isAirToSolid = thisVoxel.DataId != VoxelData.VoxelType.AIR;  // Requires you to set the voxel's type to the new type before calling this method.
+			var isAirToSolid = thisVoxel.VoxelType != VoxelData.VoxelType.AIR;  // Requires you to set the voxel's type to the new type before calling this method.
 
 			int thisFaceId = 0;
-			foreach (var neighborPositionGlobal in GetNeighboringPositions(thisPositionGlobal))
+			foreach (var neighborsPositionGlobal in GetNeighboringPositions(thisPositionGlobal))
 			{
-				var neighborsChunk = ChunkManager.Instance.GetChunk(neighborPositionGlobal);
-				var neighborsPosition = neighborPositionGlobal.WorldToChunkLocal(neighborsChunk);
+				var neighborsChunk = ChunkManager.Instance.GetChunk(neighborsPositionGlobal);
+				var neighborsPosition = neighborsPositionGlobal.WorldToChunkLocal(neighborsChunk);
 				var neighborsVoxel = neighborsChunk.GetVoxel(neighborsPosition);
 
 				var neighborsFaceId = thisFaceId + (thisFaceId < 3 ? +3 : -3);
@@ -36,12 +36,12 @@ namespace VoxelGame.Terrain
 						neighborsVoxel = neighborsChunk.AddVoxelStub(neighborsPosition, VoxelData.VoxelType.AIR, -1);  // TODO: Add proper biome type.
 					}
 
-					if (neighborsVoxel.DataId == VoxelData.VoxelType.AIR)
+					if (neighborsVoxel.VoxelType == VoxelData.VoxelType.AIR)
 					{
 						++neighborsVoxel.NumOfExposedFaces;
 
 						// Create the new face and increment thisVoxel.NumOfExposedFaces.
-						var face = thisChunk.Mesher.CreateMeshFace(thisVoxel.Position.ChunkLocalToChunkSlice(axis), thisFaceId);
+						var face = thisChunk.Mesher.CreateMeshFace(thisVoxel.Position.ChunkLocalToChunkSlice(axis), thisFaceId, thisVoxel.VoxelType);
 						thisVoxel.AddFace(thisFaceId, face.MeshIndex);
 						thisChunk.Mesher.PositionQuad(face);
 					}
@@ -67,16 +67,18 @@ namespace VoxelGame.Terrain
 				{
 					if (neighborsVoxel == null)
 					{
-						neighborsVoxel = neighborsChunk.AddVoxelStub(neighborsPosition, VoxelData.VoxelType.DIRT, -1);  // TODO: Add block type and biome selection.
+						var height = neighborsChunk.GetHeightmapValue(neighborsPosition.x, neighborsPosition.z);
+						var voxelType = ChunkManager.Instance.BiomeLogic.GetVoxelType(neighborsPositionGlobal, height);
+						neighborsVoxel = neighborsChunk.AddVoxelStub(neighborsPosition, voxelType, -1);  // TODO: Add block type and biome selection.
 						neighborsChunk.AddHeight(neighborsVoxel.Position.y);
 					}
 
-					if (neighborsVoxel.DataId != VoxelData.VoxelType.AIR)
+					if (neighborsVoxel.VoxelType != VoxelData.VoxelType.AIR)
 					{
 						++thisVoxel.NumOfExposedFaces;
 
 						// Create the new face and increment neighborsVoxel.NumOfExposedFaces.
-						var face = neighborsChunk.Mesher.CreateMeshFace(neighborsVoxel.Position.ChunkLocalToChunkSlice(axis), neighborsFaceId);
+						var face = neighborsChunk.Mesher.CreateMeshFace(neighborsVoxel.Position.ChunkLocalToChunkSlice(axis), neighborsFaceId, neighborsVoxel.VoxelType);
 						neighborsVoxel.AddFace(neighborsFaceId, face.MeshIndex);
 						neighborsChunk.Mesher.PositionQuad(face);
 

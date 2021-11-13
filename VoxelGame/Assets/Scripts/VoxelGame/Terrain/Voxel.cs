@@ -7,13 +7,13 @@ namespace VoxelGame.Terrain
 		public Voxel(Vector3Int position, VoxelData.VoxelType dataId, int biomeId)
 		{
 			Position = position;
-			DataId = dataId;
+			VoxelType = dataId;
 			BiomeId = biomeId;
 		}
 
 		public Vector3Int Position { get; private set; }
 
-		public VoxelData.VoxelType DataId { get; set; }
+		public VoxelData.VoxelType VoxelType { get; set; }
 
 		public int BiomeId { get; private set; }  // Cannot change biome.
 

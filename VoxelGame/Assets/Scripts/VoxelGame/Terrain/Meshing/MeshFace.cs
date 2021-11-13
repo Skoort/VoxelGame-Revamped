@@ -11,5 +11,7 @@ namespace VoxelGame.Terrain.Meshing
 
 		public Vector3Int SliceSpacePosition;
 		public Vector3Int Scale;
+
+		public VoxelData.VoxelType VoxelType { get; set; }
 	}
 }

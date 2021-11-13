@@ -59,11 +59,11 @@ namespace VoxelGame
 
 				if (placeOrPickup)
 				{
-					voxelToAffect.DataId = VoxelData.VoxelType.DIRT;  // TODO: Support different types of blocks.
+					voxelToAffect.VoxelType = VoxelData.VoxelType.STONE;  // TODO: Support different types of blocks.
 				}
 				else
 				{
-					voxelToAffect.DataId = VoxelData.VoxelType.AIR;
+					voxelToAffect.VoxelType = VoxelData.VoxelType.AIR;
 				}
 
 				ChunkEditor.CreateOrDestroyBlock(chunkToAffect, voxelToAffect, posToAffect, requestRedraws: true, requestCollisions: true);

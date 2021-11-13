@@ -19,7 +19,7 @@ namespace VoxelGame.Terrain.Meshing
 		private List<int> _faces;
 		private List<Vector3> _vertices;
 		private List<Vector3> _normals;
-		private List<Vector2> _uvs;
+		private List<Vector3> _uvs;
 
 		public void MarkDirty()
 		{
@@ -43,7 +43,7 @@ namespace VoxelGame.Terrain.Meshing
 			_faces = new List<int>();
 			_vertices = new List<Vector3>();
 			_normals = new List<Vector3>();
-			_uvs = new List<Vector2>();
+			_uvs = new List<Vector3>();
 			DirtyCount = 0;
 		}
 
@@ -74,7 +74,7 @@ namespace VoxelGame.Terrain.Meshing
 		private void CreateFacesAtPosition(Vector3Int position)
 		{
 			var voxel = Chunk.GetVoxel(position);
-			if (voxel == null || voxel.DataId == VoxelData.VoxelType.AIR)
+			if (voxel == null || voxel.VoxelType == VoxelData.VoxelType.AIR)
 			{
 				return;
 			}
@@ -97,7 +97,7 @@ namespace VoxelGame.Terrain.Meshing
 
 			// A face should only be drawn if the voxel in front/behind (relative) this one is AIR.
 			var voxelBehind = Chunk.GetVoxel((sliceSpacePos + new Vector3Int(0, 0, dir == 0 ? +1 : -1)).ChunkSliceToChunkLocal(axis));
-			if (voxelBehind?.DataId == VoxelData.VoxelType.AIR)
+			if (voxelBehind?.VoxelType == VoxelData.VoxelType.AIR)
 			{
 				var botNeighbor = Chunk.GetVoxel((sliceSpacePos - Vector3Int.up).ChunkSliceToChunkLocal(axis));
 				var lftNeighbor = Chunk.GetVoxel((sliceSpacePos - Vector3Int.right).ChunkSliceToChunkLocal(axis));
@@ -110,7 +110,7 @@ namespace VoxelGame.Terrain.Meshing
 					: null;
 
 				MeshFace usedMesh = null;
-				if (botMesh != null && botMesh.Scale.x == 1)
+				if (botMesh != null && botMesh.Scale.x == 1 && voxel.VoxelType == botNeighbor.VoxelType)
 				{
 					// The bottom (relative) voxel's rect is only 1 unit wide. Extend it upwards by 1. Extending
 					// a rect wider than 1 unit upwards is handled below by creating another intermediate rect.
@@ -119,7 +119,7 @@ namespace VoxelGame.Terrain.Meshing
 					usedMesh = botMesh;
 				}
 
-				if (lftMesh != null && lftMesh.Scale.y == 1 && usedMesh == null)
+				if (lftMesh != null && lftMesh.Scale.y == 1 && usedMesh == null && voxel.VoxelType == lftNeighbor.VoxelType)
 				{
 					// Because of the way we iterate, the rect grows to the right as much as possible
 					// before exploring a way to grow upwards. Therefore, a rect that has grown
@@ -130,7 +130,8 @@ namespace VoxelGame.Terrain.Meshing
 
 					if (botMesh != null
 					&& lftMesh.SliceSpacePosition.x == botMesh.SliceSpacePosition.x
-					&& lftMesh.Scale.x == botMesh.Scale.x)
+					&& lftMesh.Scale.x == botMesh.Scale.x
+					&& voxel.VoxelType == botNeighbor.VoxelType)
 					{
 						// Extending the left voxel's rect caused it to be merged with the bottom voxel's rect.
 						++botMesh.Scale.y;
@@ -154,15 +155,17 @@ namespace VoxelGame.Terrain.Meshing
 				if (usedMesh == null)
 				{
 					// Create a brand new rect for this voxel.
-					usedMesh = CreateMeshFace(sliceSpacePos, faceIndex);
+					usedMesh = CreateMeshFace(sliceSpacePos, faceIndex, voxel.VoxelType);
 				}
 
 				voxel.AddFace(faceIndex, usedMesh.MeshIndex);
 			}
 		}
 
-		public MeshFace CreateMeshFace(Vector3Int sliceSpacePos, int voxelFaceIndex)
+		public MeshFace CreateMeshFace(Vector3Int sliceSpacePos, int voxelFaceIndex, VoxelData.VoxelType voxelType)
 		{
+			var uvs = VoxelData.GetScaledAndOffsetUVs3(voxelFaceIndex, (int) voxelType - 1);
+
 			MeshFace meshData = null;
 			if (_unusedMeshData.Count > 0)
 			{
@@ -173,7 +176,8 @@ namespace VoxelGame.Terrain.Meshing
 					int index = i + meshData.MeshIndex * 4;
 					_vertices[index] = VoxelData.Vertices[voxelFaceIndex][i];
 					_normals[index] = VoxelData.Normals[voxelFaceIndex][i];
-					_uvs[index] = VoxelData.UVs2[voxelFaceIndex][i];
+
+					_uvs[index] = uvs[i];
 				}
 			}
 			else
@@ -182,13 +186,14 @@ namespace VoxelGame.Terrain.Meshing
 				_greedyMeshData.Add(meshData);
 				_vertices.AddRange(VoxelData.Vertices[voxelFaceIndex]);
 				_normals.AddRange(VoxelData.Normals[voxelFaceIndex]);
-				_uvs.AddRange(VoxelData.UVs2[voxelFaceIndex]);
+				_uvs.AddRange(uvs);
 				_faces.AddRange(Enumerable.Range(0, 4).Select(i => i + meshData.MeshIndex * 4));
 			}
 			meshData.Scale = Vector3Int.one;
 			meshData.SliceDimension = voxelFaceIndex % 3;
 			meshData.SliceSpacePosition = sliceSpacePos;
 			meshData.FaceId = voxelFaceIndex;
+			meshData.VoxelType = voxelType;
 
 			return meshData;
 		}
@@ -222,6 +227,22 @@ namespace VoxelGame.Terrain.Meshing
 				var vertexIndex = quad.MeshIndex * 4 + i;
 
 				_vertices[vertexIndex] = Vector3Int.FloorToInt(_vertices[vertexIndex]) * localSliceScales + absPosition;
+
+				// This is a quick and dirty fix for this mapping. Consider changing it.
+				int scaleX;
+				int scaleY;
+				if (quad.FaceId == 0 || quad.FaceId == 3)
+				{  // For this combination it's actually the height of the rect in x
+					scaleX = quad.Scale.y;
+					scaleY = quad.Scale.x;
+				}
+				else
+				{
+					scaleX = quad.Scale.x;
+					scaleY = quad.Scale.y;
+				}
+				var uv = _uvs[vertexIndex];
+				_uvs[vertexIndex] = new Vector3(scaleX * uv.x, scaleY * uv.y, uv.z);
 			}
 		}
 
@@ -275,7 +296,7 @@ namespace VoxelGame.Terrain.Meshing
 			if (positionToRemoveSliceSpace.y < oldRect.SliceSpacePosition.y + oldRect.Scale.y - 1)
 			{
 				var bottomLeftCorner = new Vector3Int(oldRect.SliceSpacePosition.x, positionToRemoveSliceSpace.y + 1, oldRect.SliceSpacePosition.z);
-				topRect = CreateMeshFace(bottomLeftCorner, oldRect.FaceId);
+				topRect = CreateMeshFace(bottomLeftCorner, oldRect.FaceId, oldRect.VoxelType);
 				topRect.Scale = new Vector3Int(
 					oldRect.Scale.x,
 					oldRect.Scale.y - (positionToRemoveSliceSpace.y - oldRect.SliceSpacePosition.y + 1),
@@ -285,7 +306,7 @@ namespace VoxelGame.Terrain.Meshing
 			if (positionToRemoveSliceSpace.y > oldRect.SliceSpacePosition.y)
 			{
 				var bottomLeftCorner = new Vector3Int(positionToRemoveSliceSpace.x, oldRect.SliceSpacePosition.y, oldRect.SliceSpacePosition.z);
-				bottomRect = CreateMeshFace(bottomLeftCorner, oldRect.FaceId);
+				bottomRect = CreateMeshFace(bottomLeftCorner, oldRect.FaceId, oldRect.VoxelType);
 				bottomRect.Scale = new Vector3Int(
 					1,
 					positionToRemoveSliceSpace.y - oldRect.SliceSpacePosition.y,
@@ -295,7 +316,7 @@ namespace VoxelGame.Terrain.Meshing
 			if (positionToRemoveSliceSpace.x < oldRect.SliceSpacePosition.x + oldRect.Scale.x - 1)
 			{
 				var bottomLeftCorner = new Vector3Int(positionToRemoveSliceSpace.x + 1, oldRect.SliceSpacePosition.y, oldRect.SliceSpacePosition.z);
-				rightRect = CreateMeshFace(bottomLeftCorner, oldRect.FaceId);
+				rightRect = CreateMeshFace(bottomLeftCorner, oldRect.FaceId, oldRect.VoxelType);
 				rightRect.Scale = new Vector3Int(
 					oldRect.Scale.x - (positionToRemoveSliceSpace.x - oldRect.SliceSpacePosition.x + 1),
 					positionToRemoveSliceSpace.y - oldRect.SliceSpacePosition.y + 1,
@@ -305,7 +326,7 @@ namespace VoxelGame.Terrain.Meshing
 			if (positionToRemoveSliceSpace.x > oldRect.SliceSpacePosition.x)
 			{
 				var bottomLeftCorner = oldRect.SliceSpacePosition;
-				leftRect = CreateMeshFace(bottomLeftCorner, oldRect.FaceId);
+				leftRect = CreateMeshFace(bottomLeftCorner, oldRect.FaceId, oldRect.VoxelType);
 				leftRect.Scale = new Vector3Int(
 					positionToRemoveSliceSpace.x - oldRect.SliceSpacePosition.x,
 					positionToRemoveSliceSpace.y - oldRect.SliceSpacePosition.y + 1,
